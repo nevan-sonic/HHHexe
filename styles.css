@@ -812,6 +812,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
     gap: 0.5rem;
   }
 
+  /* Prevent iOS Safari from auto-zooming page on text field focus */
+  .input-field input,
+  .picker-item select {
+    font-size: 16px !important;
+  }
+
   .group-title {
     font-size: 0.78rem;
     padding-bottom: 0.2rem;
