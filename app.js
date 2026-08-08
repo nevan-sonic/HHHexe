@@ -652,23 +652,27 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const v = btn.dataset.view;
+      const frontTextControls = document.getElementById('frontTextControls');
       if (v === 'front') {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'flex';
         cardBoxBack.style.display = 'none';
         if (cardBoxPfp) cardBoxPfp.style.display = 'none';
+        if (frontTextControls) frontTextControls.style.display = 'block';
         activateTab('tab-front');
       } else if (v === 'back') {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'none';
         cardBoxBack.style.display = 'flex';
         if (cardBoxPfp) cardBoxPfp.style.display = 'none';
+        if (frontTextControls) frontTextControls.style.display = 'block';
         activateTab('tab-back');
       } else if (v === 'pfp') {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'none';
         cardBoxBack.style.display = 'none';
         if (cardBoxPfp) cardBoxPfp.style.display = 'flex';
+        if (frontTextControls) frontTextControls.style.display = 'none';
         activateTab('tab-front');
         renderPfp();
       }
@@ -693,7 +697,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (side === 'pfp') {
       renderPfp();
       canvas = pfpCanvas;
-      filename = 'HackerHouse_Goa_X_PFP_Frame.png';
+      filename = 'HackerHouse_Goa_X_Profile_Frame.png';
     }
     const a = document.createElement('a');
     a.download = filename;
