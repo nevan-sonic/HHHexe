@@ -38,18 +38,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  /* ── Layout config (1254×1254 canvas units) ──────── */
+  /* ── Layout config (722×1099 canvas units) ──────── */
   const FC = {
-    circleCenter: { x:627, y:535 }, circleRadius: 210,
-    nameCenter:   { x:627, y:771 }, nameAngle: -1.2 * Math.PI/180, maxNameW: 390,
-    roleCenter:   { x:627, y:843 }, maxRoleW: 440,
-    idCenter:     { x:490, y:941 }, maxIdW: 200,       // Builder ID box
-    tagCenter:    { x:577, y:1034 }, maxTagW: 170
+    circleCenter: { x:361, y:439 }, circleRadius: 210,
+    nameCenter:   { x:361, y:675 }, nameAngle: -1.2 * Math.PI/180, maxNameW: 390,
+    roleCenter:   { x:361, y:747 }, maxRoleW: 440,
+    idCenter:     { x:224, y:845 }, maxIdW: 200,       // Builder ID box
+    tagCenter:    { x:311, y:938 }, maxTagW: 170
   };
   const BC = {
-    circleCenter:    { x:627, y:550 }, circleRadius: 210,
-    teamNameCenter:  { x:627, y:300 }, teamNameAngle: -1.5 * Math.PI/180, maxTeamNameW: 450,
-    sloganCenter:    { x:570, y:800 }, sloganAngle: 0.8 * Math.PI/180, maxSloganW: 340
+    circleCenter:    { x:361, y:454 }, circleRadius: 210,
+    teamNameCenter:  { x:361, y:204 }, teamNameAngle: -1.5 * Math.PI/180, maxTeamNameW: 450,
+    sloganCenter:    { x:304, y:704 }, sloganAngle: 0.8 * Math.PI/180, maxSloganW: 340
   };
 
   /* ── Helpers ─────────────────────────────────────── */
@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── FRONT render ────────────────────────────────── */
   function renderFront() {
     if (!frontTemplate.complete || !frontTemplate.naturalWidth) return;
-    frontCtx.clearRect(0, 0, 1254, 1254);
-    frontCtx.drawImage(frontTemplate, 0, 0, 1254, 1254);
+    frontCtx.clearRect(0, 0, 722, 1099);
+    frontCtx.drawImage(frontTemplate, 0, 0, 722, 1099);
 
     const fs = S.front;
 
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Cover original template role string
       frontCtx.fillStyle = '#017038';
       frontCtx.beginPath();
-      frontCtx.roundRect(380, 824, 494, 38, 6);
+      frontCtx.roundRect(114, 728, 494, 38, 6);
       frontCtx.fill();
       frontCtx.translate(FC.roleCenter.x, FC.roleCenter.y);
       fitFont(frontCtx, fs.role.trim(), 28, 'Fira Code', '700', FC.maxRoleW, 14);
@@ -212,8 +212,8 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── BACK render ─────────────────────────────────── */
   function renderBack() {
     if (!backTemplate.complete || !backTemplate.naturalWidth) return;
-    backCtx.clearRect(0, 0, 1254, 1254);
-    backCtx.drawImage(backTemplate, 0, 0, 1254, 1254);
+    backCtx.clearRect(0, 0, 722, 1099);
+    backCtx.drawImage(backTemplate, 0, 0, 722, 1099);
 
     const bs = S.back;
 
@@ -437,7 +437,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const r = canvas.getBoundingClientRect();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
       const cy = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x:(cx-r.left)*(1254/r.width), y:(cy-r.top)*(1254/r.height) };
+      return { x:(cx-r.left)*(722/r.width), y:(cy-r.top)*(1099/r.height) };
     };
 
     const startDrag = e => {
