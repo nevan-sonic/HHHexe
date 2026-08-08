@@ -662,6 +662,10 @@ input[type="range"]::-webkit-slider-thumb:hover {
   touch-action: none;
 }
 
+.card-viewport.pfp-viewport {
+  aspect-ratio: 1 / 1 !important;
+}
+
 /* Interactive Drag Overlay Hint */
 .drag-hint-overlay {
   position: absolute;

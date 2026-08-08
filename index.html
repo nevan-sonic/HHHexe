@@ -17,7 +17,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   
-  <link rel="stylesheet" href="styles.css?v=1.0.2">
+  <link rel="stylesheet" href="styles.css?v=1.0.3">
 </head>
 <body>
   <div class="app-container">
@@ -40,8 +40,11 @@
         <button id="btnDownloadBack" class="btn btn-outline-yellow">
           <i class="fa-solid fa-download"></i> Back Pass
         </button>
+        <button id="btnDownloadPfp" class="btn btn-outline-yellow">
+          <i class="fa-solid fa-circle-user"></i> X PFP Frame
+        </button>
         <button id="btnDownloadBoth" class="btn btn-pink-glow">
-          <i class="fa-solid fa-file-zipper"></i> Download Both (HD)
+          <i class="fa-solid fa-file-zipper"></i> Download All (HD)
         </button>
       </div>
     </header>
@@ -244,6 +247,9 @@
             <button class="view-btn" data-view="back">
               <i class="fa-solid fa-shield-halved"></i> Back Pass
             </button>
+            <button class="view-btn" data-view="pfp">
+              <i class="fa-solid fa-circle-user"></i> X PFP Frame
+            </button>
           </div>
         </div>
 
@@ -283,11 +289,35 @@
               </button>
             </div>
           </div>
+
+          <!-- X PFP FRAME WRAPPER -->
+          <div class="card-box" id="cardBoxPfp" style="display: none;">
+            <div class="card-header-tag">X PROFILE PICTURE FRAME</div>
+            <div class="card-viewport pfp-viewport">
+              <canvas id="pfpCanvas" width="1024" height="1024"></canvas>
+              <!-- Interactive Drag Overlay -->
+              <div class="drag-hint-overlay" id="pfpDragHint">
+                <div class="drag-circle-guide pfp-guide"></div>
+                <div class="drag-tooltip"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to adjust photo</div>
+              </div>
+            </div>
+            <div class="card-footer-controls">
+              <button class="btn btn-sm btn-subtle" onclick="triggerProfileUpload()">
+                <i class="fa-solid fa-image"></i> Change Photo
+              </button>
+              <button class="btn btn-sm btn-pink-glow" onclick="downloadSinglePass('pfp')">
+                <i class="fa-solid fa-download"></i> Save PFP
+              </button>
+              <button class="btn btn-sm btn-x-share" onclick="shareToX('pfp')">
+                <i class="fa-brands fa-x-twitter"></i> Share to X
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>
   </div>
 
-  <script src="app.js?v=1.0.2"></script>
+  <script src="app.js?v=1.0.3"></script>
 </body>
 </html>

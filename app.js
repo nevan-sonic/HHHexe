@@ -10,17 +10,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const frontCtx    = frontCanvas.getContext('2d');
   const backCanvas  = document.getElementById('backCanvas');
   const backCtx     = backCanvas.getContext('2d');
+  const pfpCanvas   = document.getElementById('pfpCanvas');
+  const pfpCtx      = pfpCanvas ? pfpCanvas.getContext('2d') : null;
 
   /* ── Template images ─────────────────────────────── */
   const frontTemplate = new Image();
   frontTemplate.src   = 'frontf.jpeg';
   const backTemplate  = new Image();
   backTemplate.src    = 'backf.jpeg';
+  const pfpFrameTemplate = new Image();
+  pfpFrameTemplate.src   = 'pfp_frame.png';
 
   let loaded = 0;
-  const onLoad = () => { if (++loaded >= 2) renderAll(); };
-  frontTemplate.onload = onLoad;
-  backTemplate.onload  = onLoad;
+  const onLoad = () => { if (++loaded >= 3) renderAll(); };
+  frontTemplate.onload    = onLoad;
+  backTemplate.onload     = onLoad;
+  pfpFrameTemplate.onload = onLoad;
 
   /* ── App state ───────────────────────────────────── */
   const S = {
@@ -251,7 +256,66 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function renderAll() { renderFront(); renderBack(); }
+  /* ── PFP OVERLAY render ──────────────────────────── */
+  function renderPfp() {
+    if (!pfpCanvas || !pfpCtx) return;
+    pfpCtx.clearRect(0, 0, 1024, 1024);
+
+    // 1. Tropical Dark Background
+    const bgGrad = pfpCtx.createRadialGradient(512, 512, 100, 512, 512, 700);
+    bgGrad.addColorStop(0, '#013b1d');
+    bgGrad.addColorStop(0.6, '#012412');
+    bgGrad.addColorStop(1, '#00140a');
+    pfpCtx.fillStyle = bgGrad;
+    pfpCtx.fillRect(0, 0, 1024, 1024);
+
+    const fs = S.front;
+    // Inner frame photo circle bounds: center (512, 420), radius 330
+    const cx = 512, cy = 420, r = 330;
+
+    // 2. Profile Photo (if uploaded)
+    if (fs.image) {
+      pfpCtx.save();
+      pfpCtx.beginPath();
+      pfpCtx.arc(cx, cy, r, 0, Math.PI * 2);
+      pfpCtx.closePath();
+      pfpCtx.clip();
+
+      pfpCtx.fillStyle = '#0f172a';
+      pfpCtx.fillRect(cx - r, cy - r, r * 2, r * 2);
+
+      pfpCtx.translate(cx + fs.img.x, cy + fs.img.y);
+      pfpCtx.rotate(fs.img.rotate * Math.PI / 180);
+      const aspect = fs.image.width / fs.image.height;
+      let w, h;
+      if (aspect >= 1) { h = r * 2; w = h * aspect; }
+      else              { w = r * 2; h = w / aspect; }
+      w *= fs.img.scale;
+      h *= fs.img.scale;
+      pfpCtx.drawImage(fs.image, -w / 2, -h / 2, w, h);
+      pfpCtx.restore();
+    } else {
+      // Placeholder background text inside frame opening
+      pfpCtx.save();
+      pfpCtx.beginPath();
+      pfpCtx.arc(cx, cy, r, 0, Math.PI * 2);
+      pfpCtx.closePath();
+      pfpCtx.fillStyle = 'rgba(1, 112, 56, 0.4)';
+      pfpCtx.fill();
+      pfpCtx.fillStyle = '#ffe600';
+      pfpCtx.font = 'bold 36px "Plus Jakarta Sans", sans-serif';
+      pfpCtx.textAlign = 'center';
+      pfpCtx.fillText('Upload Profile Photo', cx, cy);
+      pfpCtx.restore();
+    }
+
+    // 3. Draw pfp_frame.png template overlay on top
+    if (pfpFrameTemplate.complete && pfpFrameTemplate.naturalWidth) {
+      pfpCtx.drawImage(pfpFrameTemplate, 0, 0, 1024, 1024);
+    }
+  }
+
+  function renderAll() { renderFront(); renderBack(); renderPfp(); }
 
   // Render once fonts are ready
   document.fonts.ready.then(renderAll);
@@ -293,25 +357,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const v = parseFloat(e.target.value);
     S.front.img.scale = v;
     document.getElementById('profileZoomVal').textContent = `${Math.round(v*100)}%`;
-    renderFront();
+    renderFront(); renderPfp();
   });
   bind('profilePosX', e => {
     const v = parseInt(e.target.value);
     S.front.img.x = v;
     document.getElementById('profilePosXVal').textContent = `${v}px`;
-    renderFront();
+    renderFront(); renderPfp();
   });
   bind('profilePosY', e => {
     const v = parseInt(e.target.value);
     S.front.img.y = v;
     document.getElementById('profilePosYVal').textContent = `${v}px`;
-    renderFront();
+    renderFront(); renderPfp();
   });
   bind('profileRotate', e => {
     const v = parseInt(e.target.value);
     S.front.img.rotate = v;
     document.getElementById('profileRotateVal').textContent = `${v}°`;
-    renderFront();
+    renderFront(); renderPfp();
   });
 
   document.getElementById('btnResetFrontImage').addEventListener('click', () => {
@@ -324,32 +388,26 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('profilePosXVal').textContent = '0px';
     document.getElementById('profilePosYVal').textContent = '0px';
     document.getElementById('profileRotateVal').textContent = '0°';
-    renderFront();
+    renderFront(); renderPfp();
   });
 
   document.getElementById('inputProfilePic').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => {
-        S.front.image = img;
-        S.front.img   = { x:0, y:0, scale:1, rotate:0 };
-        document.getElementById('profileZoom').value = 1;
-        document.getElementById('profilePosX').value = 0;
-        document.getElementById('profilePosY').value = 0;
-        document.getElementById('profileRotate').value = 0;
-        document.getElementById('profileZoomVal').textContent = '100%';
-        document.getElementById('profilePosXVal').textContent = '0px';
-        document.getElementById('profilePosYVal').textContent = '0px';
-        document.getElementById('profileRotateVal').textContent = '0°';
-        document.getElementById('labelProfilePicText').textContent = file.name;
-        renderFront();
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    processImageFile(file, img => {
+      S.front.image = img;
+      S.front.img   = { x:0, y:0, scale:1, rotate:0 };
+      document.getElementById('profileZoom').value = 1;
+      document.getElementById('profilePosX').value = 0;
+      document.getElementById('profilePosY').value = 0;
+      document.getElementById('profileRotate').value = 0;
+      document.getElementById('profileZoomVal').textContent = '100%';
+      document.getElementById('profilePosXVal').textContent = '0px';
+      document.getElementById('profilePosYVal').textContent = '0px';
+      document.getElementById('profileRotateVal').textContent = '0°';
+      document.getElementById('labelProfilePicText').textContent = file.name;
+      renderFront(); renderPfp();
+    });
   });
 
   // Back Controls
@@ -407,49 +465,48 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('inputTeamLogo').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => {
-        S.back.image = img;
-        S.back.img   = { x:0, y:0, scale:1, rotate:0 };
-        document.getElementById('logoZoom').value = 1;
-        document.getElementById('logoPosX').value = 0;
-        document.getElementById('logoPosY').value = 0;
-        document.getElementById('logoRotate').value = 0;
-        document.getElementById('logoZoomVal').textContent = '100%';
-        document.getElementById('logoPosXVal').textContent = '0px';
-        document.getElementById('logoPosYVal').textContent = '0px';
-        document.getElementById('logoRotateVal').textContent = '0°';
-        document.getElementById('labelTeamLogoText').textContent = file.name;
-        renderBack();
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
+    processImageFile(file, img => {
+      S.back.image = img;
+      S.back.img   = { x:0, y:0, scale:1, rotate:0 };
+      document.getElementById('logoZoom').value = 1;
+      document.getElementById('logoPosX').value = 0;
+      document.getElementById('logoPosY').value = 0;
+      document.getElementById('logoRotate').value = 0;
+      document.getElementById('logoZoomVal').textContent = '100%';
+      document.getElementById('logoPosXVal').textContent = '0px';
+      document.getElementById('logoPosYVal').textContent = '0px';
+      document.getElementById('logoRotateVal').textContent = '0°';
+      document.getElementById('labelTeamLogoText').textContent = file.name;
+      renderBack();
+    });
   });
 
   /* ── Canvas Drag-to-Pan (Bidirectional sync with Move X / Move Y sliders) ── */
   function makeDraggable(canvas, side) {
+    if (!canvas) return;
     let dragging = false, sx=0, sy=0, ox=0, oy=0;
 
     const coords = e => {
       const r = canvas.getBoundingClientRect();
       const cx = e.touches ? e.touches[0].clientX : e.clientX;
       const cy = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x:(cx-r.left)*(722/r.width), y:(cy-r.top)*(1099/r.height) };
+      const cw = side === 'pfp' ? 1024 : 722;
+      const ch = side === 'pfp' ? 1024 : 1099;
+      return { x:(cx-r.left)*(cw/r.width), y:(cy-r.top)*(ch/r.height) };
     };
 
+    const targetSide = side === 'pfp' ? 'front' : side;
+
     const startDrag = e => {
-      if (!S[side].image) return;
+      if (!S[targetSide].image) return;
       const c = coords(e);
       sx = c.x; sy = c.y;
-      ox = S[side].img.x; oy = S[side].img.y;
+      ox = S[targetSide].img.x; oy = S[targetSide].img.y;
       dragging = true;
     };
 
     const updateZoomUI = (scaleVal) => {
-      const prefix = side === 'front' ? 'profile' : 'logo';
+      const prefix = targetSide === 'front' ? 'profile' : 'logo';
       const sliderZoom = document.getElementById(`${prefix}Zoom`);
       const valZoom = document.getElementById(`${prefix}ZoomVal`);
       if (sliderZoom) sliderZoom.value = scaleVal;
@@ -464,11 +521,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const newX = Math.round(ox + (c.x - sx));
       const newY = Math.round(oy + (c.y - sy));
 
-      S[side].img.x = newX;
-      S[side].img.y = newY;
+      S[targetSide].img.x = newX;
+      S[targetSide].img.y = newY;
 
       // Sync slider UI controls while dragging on canvas
-      const prefix = side === 'front' ? 'profile' : 'logo';
+      const prefix = targetSide === 'front' ? 'profile' : 'logo';
       const sliderX = document.getElementById(`${prefix}PosX`);
       const sliderY = document.getElementById(`${prefix}PosY`);
       const valX = document.getElementById(`${prefix}PosXVal`);
@@ -479,7 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (valX) valX.textContent = `${newX}px`;
       if (valY) valY.textContent = `${newY}px`;
 
-      side === 'front' ? renderFront() : renderBack();
+      if (targetSide === 'front') { renderFront(); renderPfp(); }
+      else { renderBack(); }
     };
 
     const stopDrag = () => { dragging = false; };
@@ -491,14 +549,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mouse Wheel Zoom
     canvas.addEventListener('wheel', e => {
-      if (!S[side].image) return;
+      if (!S[targetSide].image) return;
       e.preventDefault();
       const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
-      let newScale = S[side].img.scale * zoomFactor;
+      let newScale = S[targetSide].img.scale * zoomFactor;
       newScale = Math.max(0.05, Math.min(4.0, newScale));
-      S[side].img.scale = newScale;
+      S[targetSide].img.scale = newScale;
       updateZoomUI(newScale);
-      side === 'front' ? renderFront() : renderBack();
+      if (targetSide === 'front') { renderFront(); renderPfp(); }
+      else { renderBack(); }
     }, { passive: false });
 
     // Touch Pinch & Drag Handlers
@@ -510,7 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     canvas.addEventListener('touchstart', e => {
-      if (!S[side].image) return;
+      if (!S[targetSide].image) return;
       if (e.touches.length === 2) {
         dragging = false;
         pinchDist = getTouchDist(e);
@@ -520,17 +579,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
 
     window.addEventListener('touchmove', e => {
-      if (!S[side].image) return;
+      if (!S[targetSide].image) return;
       if (e.touches.length === 2 && pinchDist > 0) {
         if (e.cancelable) e.preventDefault();
         const dist = getTouchDist(e);
         const factor = dist / pinchDist;
         pinchDist = dist;
-        let newScale = S[side].img.scale * factor;
+        let newScale = S[targetSide].img.scale * factor;
         newScale = Math.max(0.05, Math.min(4.0, newScale));
-        S[side].img.scale = newScale;
+        S[targetSide].img.scale = newScale;
         updateZoomUI(newScale);
-        side === 'front' ? renderFront() : renderBack();
+        if (targetSide === 'front') { renderFront(); renderPfp(); }
+        else { renderBack(); }
       } else if (dragging) {
         doDrag(e);
       }
@@ -544,11 +604,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   makeDraggable(frontCanvas, 'front');
   makeDraggable(backCanvas,  'back');
+  makeDraggable(pfpCanvas,   'pfp');
 
   /* ── View Switchers ────────────────────────── */
   const cardsDisplay = document.getElementById('cardsDisplay');
   const cardBoxFront = document.getElementById('cardBoxFront');
   const cardBoxBack  = document.getElementById('cardBoxBack');
+  const cardBoxPfp   = document.getElementById('cardBoxPfp');
 
   function activateTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -565,12 +627,21 @@ document.addEventListener('DOMContentLoaded', () => {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'flex';
         cardBoxBack.style.display = 'none';
+        if (cardBoxPfp) cardBoxPfp.style.display = 'none';
         activateTab('tab-front');
-      } else {
+      } else if (v === 'back') {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'none';
         cardBoxBack.style.display = 'flex';
+        if (cardBoxPfp) cardBoxPfp.style.display = 'none';
         activateTab('tab-back');
+      } else if (v === 'pfp') {
+        cardsDisplay.className = 'cards-display grid-single';
+        cardBoxFront.style.display = 'none';
+        cardBoxBack.style.display = 'none';
+        if (cardBoxPfp) cardBoxPfp.style.display = 'flex';
+        activateTab('tab-front');
+        renderPfp();
       }
     });
   });
@@ -580,14 +651,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── Downloads ───────────────────────────────────── */
   window.downloadSinglePass = side => {
-    const canvas = side==='front' ? frontCanvas : backCanvas;
-    side==='front' ? renderFront() : renderBack();
+    let canvas = frontCanvas;
+    let filename = 'HackerHouse_Goa_Front_Pass.png';
+    if (side === 'front') {
+      renderFront();
+      canvas = frontCanvas;
+      filename = 'HackerHouse_Goa_Front_Pass.png';
+    } else if (side === 'back') {
+      renderBack();
+      canvas = backCanvas;
+      filename = 'HackerHouse_Goa_Back_Pass.png';
+    } else if (side === 'pfp') {
+      renderPfp();
+      canvas = pfpCanvas;
+      filename = 'HackerHouse_Goa_X_PFP_Frame.png';
+    }
     const a = document.createElement('a');
-    a.download = `HackerHouse_Goa_${side==='front'?'Front':'Back'}_Pass.png`;
+    a.download = filename;
     a.href = canvas.toDataURL('image/png', 1.0);
     a.click();
   };
 
+  /* ── Share to X ──────────────────────────────────── */
+  window.shareToX = side => {
+    let text = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
+    if (side === 'pfp') {
+      text = "Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa";
+      renderPfp();
+    }
+    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
+    window.open(tweetUrl, '_blank');
+  };
+
+  const btnPfp = document.getElementById('btnDownloadPfp');
+  if (btnPfp) btnPfp.addEventListener('click', () => downloadSinglePass('pfp'));
   document.getElementById('btnDownloadFront').addEventListener('click', () => downloadSinglePass('front'));
   document.getElementById('btnDownloadBack').addEventListener('click',  () => downloadSinglePass('back'));
 
@@ -595,11 +692,13 @@ document.addEventListener('DOMContentLoaded', () => {
     renderAll();
     const fUrl = frontCanvas.toDataURL('image/png', 1.0);
     const bUrl = backCanvas.toDataURL('image/png', 1.0);
+    const pUrl = pfpCanvas ? pfpCanvas.toDataURL('image/png', 1.0) : null;
     if (window.JSZip && window.saveAs) {
       const zip = new JSZip();
       zip.file('HackerHouse_Goa_Front_Pass.png', fUrl.split(',')[1], {base64:true});
       zip.file('HackerHouse_Goa_Back_Pass.png',  bUrl.split(',')[1], {base64:true});
-      zip.generateAsync({type:'blob'}).then(blob => saveAs(blob, 'HackerHouse_Goa_Passes.zip'));
+      if (pUrl) zip.file('HackerHouse_Goa_X_PFP_Frame.png', pUrl.split(',')[1], {base64:true});
+      zip.generateAsync({type:'blob'}).then(blob => saveAs(blob, 'HackerHouse_Goa_Studio_Assets.zip'));
     } else {
       downloadSinglePass('front');
       setTimeout(() => downloadSinglePass('back'), 500);
