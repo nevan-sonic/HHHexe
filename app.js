@@ -20,12 +20,15 @@ document.addEventListener('DOMContentLoaded', () => {
   backTemplate.src    = 'backf.jpeg';
   const pfpFrameTemplate = new Image();
   pfpFrameTemplate.src   = 'pfp_frame.png';
+  const qrTemplate = new Image();
+  qrTemplate.src   = 'qr_hhgoa.png';
 
   let loaded = 0;
-  const onLoad = () => { if (++loaded >= 3) renderAll(); };
+  const onLoad = () => { if (++loaded >= 4) renderAll(); };
   frontTemplate.onload    = onLoad;
   backTemplate.onload     = onLoad;
   pfpFrameTemplate.onload = onLoad;
+  qrTemplate.onload       = onLoad;
 
   /* ── App state ───────────────────────────────────── */
   let currentView = 'front'; // 'front', 'back', or 'pfp'
@@ -244,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
       frontCtx.shadowOffsetY = 1;
       frontCtx.fillText(fs.tag.trim().toUpperCase(), 0, 0);
       frontCtx.restore();
+    }
+
+    // 6. Scannable QR code pointing to https://hhgoa.com/
+    if (qrTemplate.complete && qrTemplate.naturalWidth) {
+      frontCtx.drawImage(qrTemplate, 434, 813, 146, 146);
     }
   }
 
