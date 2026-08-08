@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('mousemove', doDrag);
     window.addEventListener('mouseup', stopDrag);
 
-    canvas.addEventListener('touchstart', startDrag, { passive: false });
+    canvas.addEventListener('touchstart', startDrag, { passive: true });
     window.addEventListener('touchmove', doDrag, { passive: false });
     window.addEventListener('touchend', stopDrag);
   }
