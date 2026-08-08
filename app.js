@@ -769,12 +769,47 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── Share to X ──────────────────────────────────── */
   window.shareToX = side => {
     let text = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
+    let canvas = frontCanvas;
+    let filename = 'HackerHouse_Goa_Front_Pass.png';
+
     if (side === 'pfp') {
       text = "Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa";
       renderPfp();
+      canvas = pfpCanvas;
+      filename = 'HackerHouse_Goa_X_Profile_Frame.png';
+    } else if (side === 'back') {
+      renderBack();
+      canvas = backCanvas;
+      filename = 'HackerHouse_Goa_Back_Pass.png';
+    } else {
+      renderFront();
+      canvas = frontCanvas;
+      filename = 'HackerHouse_Goa_Front_Pass.png';
     }
-    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-    window.open(tweetUrl, '_blank');
+
+    if (canvas && canvas.toBlob) {
+      canvas.toBlob(blob => {
+        if (blob) {
+          const file = new File([blob], filename, { type: 'image/png' });
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            navigator.share({
+              title: 'Hacker House Goa 2026',
+              text: text,
+              files: [file]
+            }).catch(() => {
+              const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
+              window.open(tweetUrl, '_blank');
+            });
+            return;
+          }
+        }
+        const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
+        window.open(tweetUrl, '_blank');
+      }, 'image/png', 1.0);
+    } else {
+      const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
+      window.open(tweetUrl, '_blank');
+    }
   };
 
   window.shareCurrentViewToX = () => {
