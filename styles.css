@@ -599,18 +599,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 /* Cards Display Container */
 .cards-display {
-  display: grid;
-  gap: 2rem;
+  display: flex;
   justify-content: center;
   align-items: start;
+  width: 100%;
 }
 
-.cards-display.grid-both {
-  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
-}
-
-.cards-display.grid-single {
-  grid-template-columns: minmax(440px, 620px);
+.card-box {
+  width: 100%;
+  max-width: 580px;
 }
 
 /* Single Card Box Frame */

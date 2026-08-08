@@ -238,22 +238,16 @@
       <section class="preview-area">
         <div class="preview-toolbar">
           <div class="view-switch">
-            <button class="view-btn active" data-view="both">
-              <i class="fa-solid fa-grip"></i> Dual View
-            </button>
-            <button class="view-btn" data-view="front">
-              <i class="fa-solid fa-square-full"></i> Front Pass
+            <button class="view-btn active" data-view="front">
+              <i class="fa-solid fa-id-card"></i> Front Pass
             </button>
             <button class="view-btn" data-view="back">
-              <i class="fa-solid fa-square-full"></i> Back Pass
+              <i class="fa-solid fa-shield-halved"></i> Back Pass
             </button>
-          </div>
-          <div class="preview-hint">
-            <i class="fa-solid fa-circle-info"></i> Interactive high-res live view. Drag photos directly on card to adjust position.
           </div>
         </div>
 
-        <div class="cards-display grid-both" id="cardsDisplay">
+        <div class="cards-display grid-single" id="cardsDisplay">
           <!-- FRONT CARD WRAPPER -->
           <div class="card-box" id="cardBoxFront">
             <div class="card-header-tag">FRONT SIDE PASS</div>
@@ -276,7 +270,7 @@
           </div>
 
           <!-- BACK CARD WRAPPER -->
-          <div class="card-box" id="cardBoxBack">
+          <div class="card-box" id="cardBoxBack" style="display: none;">
             <div class="card-header-tag">BACK SIDE PASS</div>
             <div class="card-viewport">
               <canvas id="backCanvas" width="1254" height="1254"></canvas>

@@ -503,17 +503,15 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const v = btn.dataset.view;
-      if (v === 'both') {
-        cardsDisplay.className = 'cards-display grid-both';
-        cardBoxFront.style.display = cardBoxBack.style.display = 'flex';
-        if (!document.querySelector('.tab-content.active')) activateTab('tab-front');
-      } else if (v === 'front') {
+      if (v === 'front') {
         cardsDisplay.className = 'cards-display grid-single';
-        cardBoxFront.style.display = 'flex'; cardBoxBack.style.display = 'none';
+        cardBoxFront.style.display = 'flex';
+        cardBoxBack.style.display = 'none';
         activateTab('tab-front');
       } else {
         cardsDisplay.className = 'cards-display grid-single';
-        cardBoxFront.style.display = 'none'; cardBoxBack.style.display = 'flex';
+        cardBoxFront.style.display = 'none';
+        cardBoxBack.style.display = 'flex';
         activateTab('tab-back');
       }
     });
