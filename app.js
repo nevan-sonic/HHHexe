@@ -494,6 +494,22 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById(btn.dataset.tab).classList.add('active');
+
+      // On mobile screens, automatically focus the active card pass preview at the top!
+      if (window.innerWidth <= 768) {
+        const side = btn.dataset.tab === 'tab-front' ? 'front' : 'back';
+        const viewBtn = document.querySelector(`.view-btn[data-view="${side}"]`);
+        if (viewBtn) {
+          document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+          viewBtn.classList.add('active');
+          cardsDisplay.className = 'cards-display grid-single';
+          if (side === 'front') {
+            cardBoxFront.style.display = 'flex'; cardBoxBack.style.display = 'none';
+          } else {
+            cardBoxFront.style.display = 'none'; cardBoxBack.style.display = 'flex';
+          }
+        }
+      }
     });
   });
 

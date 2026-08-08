@@ -734,9 +734,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
     background-attachment: scroll !important;
   }
   .workspace {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
     padding: 1.25rem 1.5rem;
+  }
+  .preview-area {
+    order: -1; /* Places Live Card Preview at the top on mobile/tablet */
   }
   .control-panel {
     max-height: none !important;
@@ -827,6 +831,18 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 0.8rem;
   }
 
+  /* Mobile Sticky Live Preview Header */
+  .preview-area {
+    order: -1;
+    position: sticky;
+    top: 0;
+    z-index: 95;
+    background: var(--goa-darkest);
+    padding: 0.4rem 0 0.6rem 0;
+    border-bottom: 2px solid var(--goa-green);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+  }
+
   /* Card Display Grid */
   .cards-display.grid-both,
   .cards-display.grid-single {
@@ -836,10 +852,12 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   .card-box {
-    padding: 0.85rem;
+    padding: 0.75rem;
     border-radius: var(--radius-lg);
-    gap: 0.75rem;
+    gap: 0.6rem;
     width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
   }
 
   .card-header-tag {
