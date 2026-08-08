@@ -487,52 +487,34 @@ document.addEventListener('DOMContentLoaded', () => {
   makeDraggable(frontCanvas, 'front');
   makeDraggable(backCanvas,  'back');
 
-  /* ── Tab & View Switchers ────────────────────────── */
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.tab).classList.add('active');
-
-      // On mobile screens, automatically focus the active card pass preview at the top!
-      if (window.innerWidth <= 768) {
-        const side = btn.dataset.tab === 'tab-front' ? 'front' : 'back';
-        const viewBtn = document.querySelector(`.view-btn[data-view="${side}"]`);
-        if (viewBtn) {
-          document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-          viewBtn.classList.add('active');
-          cardsDisplay.className = 'cards-display grid-single';
-          if (side === 'front') {
-            cardBoxFront.style.display = 'flex'; cardBoxBack.style.display = 'none';
-          } else {
-            cardBoxFront.style.display = 'none'; cardBoxBack.style.display = 'flex';
-          }
-        }
-      }
-    });
-  });
-
+  /* ── View Switchers ────────────────────────── */
   const cardsDisplay = document.getElementById('cardsDisplay');
   const cardBoxFront = document.getElementById('cardBoxFront');
   const cardBoxBack  = document.getElementById('cardBoxBack');
+
+  function activateTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const target = document.getElementById(tabId);
+    if (target) target.classList.add('active');
+  }
 
   document.querySelectorAll('.view-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const v = btn.dataset.view;
-      if (v==='both') {
+      if (v === 'both') {
         cardsDisplay.className = 'cards-display grid-both';
         cardBoxFront.style.display = cardBoxBack.style.display = 'flex';
-      } else if (v==='front') {
+        if (!document.querySelector('.tab-content.active')) activateTab('tab-front');
+      } else if (v === 'front') {
         cardsDisplay.className = 'cards-display grid-single';
-        cardBoxFront.style.display='flex'; cardBoxBack.style.display='none';
-        document.querySelector('[data-tab="tab-front"]').click();
+        cardBoxFront.style.display = 'flex'; cardBoxBack.style.display = 'none';
+        activateTab('tab-front');
       } else {
         cardsDisplay.className = 'cards-display grid-single';
-        cardBoxFront.style.display='none'; cardBoxBack.style.display='flex';
-        document.querySelector('[data-tab="tab-back"]').click();
+        cardBoxFront.style.display = 'none'; cardBoxBack.style.display = 'flex';
+        activateTab('tab-back');
       }
     });
   });
