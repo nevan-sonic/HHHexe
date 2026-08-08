@@ -289,14 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!pfpCanvas || !pfpCtx) return;
     pfpCtx.clearRect(0, 0, 1024, 1024);
 
-    // 1. Tropical Dark Background
-    const bgGrad = pfpCtx.createRadialGradient(512, 512, 100, 512, 512, 700);
-    bgGrad.addColorStop(0, '#013b1d');
-    bgGrad.addColorStop(0.6, '#012412');
-    bgGrad.addColorStop(1, '#00140a');
-    pfpCtx.fillStyle = bgGrad;
-    pfpCtx.fillRect(0, 0, 1024, 1024);
-
     const fs = S.front;
     // Inner frame photo circle bounds: center (512, 420), radius 330
     const cx = 512, cy = 420, r = 330;
