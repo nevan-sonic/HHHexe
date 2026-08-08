@@ -448,8 +448,17 @@ document.addEventListener('DOMContentLoaded', () => {
       dragging = true;
     };
 
+    const updateZoomUI = (scaleVal) => {
+      const prefix = side === 'front' ? 'profile' : 'logo';
+      const sliderZoom = document.getElementById(`${prefix}Zoom`);
+      const valZoom = document.getElementById(`${prefix}ZoomVal`);
+      if (sliderZoom) sliderZoom.value = scaleVal;
+      if (valZoom) valZoom.textContent = `${Math.round(scaleVal * 100)}%`;
+    };
+
     const doDrag = e => {
       if (!dragging) return;
+      if (e.touches && e.touches.length > 1) return;
       e.preventDefault();
       const c = coords(e);
       const newX = Math.round(ox + (c.x - sx));
@@ -475,13 +484,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const stopDrag = () => { dragging = false; };
 
+    // Mouse events
     canvas.addEventListener('mousedown', startDrag);
     window.addEventListener('mousemove', doDrag);
     window.addEventListener('mouseup', stopDrag);
 
-    canvas.addEventListener('touchstart', startDrag, { passive: true });
-    window.addEventListener('touchmove', doDrag, { passive: false });
-    window.addEventListener('touchend', stopDrag);
+    // Mouse Wheel Zoom
+    canvas.addEventListener('wheel', e => {
+      if (!S[side].image) return;
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
+      let newScale = S[side].img.scale * zoomFactor;
+      newScale = Math.max(0.05, Math.min(4.0, newScale));
+      S[side].img.scale = newScale;
+      updateZoomUI(newScale);
+      side === 'front' ? renderFront() : renderBack();
+    }, { passive: false });
+
+    // Touch Pinch & Drag Handlers
+    let pinchDist = 0;
+    const getTouchDist = e => {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+    };
+
+    canvas.addEventListener('touchstart', e => {
+      if (!S[side].image) return;
+      if (e.touches.length === 2) {
+        dragging = false;
+        pinchDist = getTouchDist(e);
+      } else if (e.touches.length === 1) {
+        startDrag(e);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
+      if (!S[side].image) return;
+      if (e.touches.length === 2 && pinchDist > 0) {
+        if (e.cancelable) e.preventDefault();
+        const dist = getTouchDist(e);
+        const factor = dist / pinchDist;
+        pinchDist = dist;
+        let newScale = S[side].img.scale * factor;
+        newScale = Math.max(0.05, Math.min(4.0, newScale));
+        S[side].img.scale = newScale;
+        updateZoomUI(newScale);
+        side === 'front' ? renderFront() : renderBack();
+      } else if (dragging) {
+        doDrag(e);
+      }
+    }, { passive: false });
+
+    window.addEventListener('touchend', e => {
+      if (e.touches.length < 2) pinchDist = 0;
+      if (e.touches.length === 0) stopDrag();
+    });
   }
 
   makeDraggable(frontCanvas, 'front');
