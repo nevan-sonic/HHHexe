@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hacker House Goa 2026 - ID Card & Pass Studio</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Bungee&family=Caveat:wght@600;700&family=Fira+Code:wght@400;600;700&family=Kalam:wght@700&family=Outfit:wght@600;700;800;900&family=Permanent+Marker&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Righteous&family=Rock+Salt&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- JSZip & FileSaver for Batch Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo-container">
+          <span class="logo-hh">HACKER HOUSE</span>
+          <span class="logo-goa-tag">गोवा</span>
+        </div>
+        <div class="brand-meta">
+          <span class="subtitle">Official Builder Pass Generator & Studio</span>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <button id="btnDownloadFront" class="btn btn-outline-yellow">
+          <i class="fa-solid fa-download"></i> Front Pass
+        </button>
+        <button id="btnDownloadBack" class="btn btn-outline-yellow">
+          <i class="fa-solid fa-download"></i> Back Pass
+        </button>
+        <button id="btnDownloadBoth" class="btn btn-pink-glow">
+          <i class="fa-solid fa-file-zipper"></i> Download Both (HD)
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      <!-- Left Panel: Customization Controls -->
+      <aside class="control-panel">
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="tab-front">
+            <i class="fa-solid fa-user-gear"></i> Front Side
+          </button>
+          <button class="tab-btn" data-tab="tab-back">
+            <i class="fa-solid fa-shield-halved"></i> Back Side
+          </button>
+        </div>
+
+        <!-- FRONT SIDE FORM -->
+        <div id="tab-front" class="tab-content active">
+          <!-- Profile Pic Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-camera"></i> Profile Picture
+            </div>
+            <div class="file-upload-box">
+              <input type="file" id="inputProfilePic" accept="image/*">
+              <label for="inputProfilePic" class="file-upload-label">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="labelProfilePicText">Upload Profile Photo</span>
+              </label>
+            </div>
+
+            <!-- Image Positioning & Scale Controls -->
+            <div class="image-adjustments" id="frontAdjustments">
+              <div class="adjustment-info">
+                <span><i class="fa-solid fa-hand-pointer"></i> Drag photo on card to reposition</span>
+                <button type="button" class="btn-text" id="btnResetFrontImage">Reset</button>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom Scale</label>
+                <input type="range" id="profileZoom" min="0.3" max="3.0" step="0.05" value="1.0">
+                <span class="val-badge" id="profileZoomVal">100%</span>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-arrows-left-right"></i> Move X</label>
+                <input type="range" id="profilePosX" min="-250" max="250" step="1" value="0">
+                <span class="val-badge" id="profilePosXVal">0px</span>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-arrows-up-down"></i> Move Y</label>
+                <input type="range" id="profilePosY" min="-250" max="250" step="1" value="0">
+                <span class="val-badge" id="profilePosYVal">0px</span>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-rotate"></i> Rotate</label>
+                <input type="range" id="profileRotate" min="-180" max="180" step="1" value="0">
+                <span class="val-badge" id="profileRotateVal">0°</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Name Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-signature"></i> Builder Name
+            </div>
+            <div class="input-field">
+              <input type="text" id="inputName" placeholder="Enter your full name" value="Nevan Alvares" maxlength="18">
+            </div>
+            <div class="font-picker-row">
+              <div class="picker-item">
+                <label>Font Vibe</label>
+                <select id="fontNameSelect">
+                  <option value="Caveat" selected>Caveat (Handwritten)</option>
+                  <option value="Permanent Marker">Permanent Marker</option>
+                  <option value="Kalam">Kalam (Artistic)</option>
+                  <option value="Rock Salt">Rock Salt (Raw)</option>
+                  <option value="Architects Daughter">Architects Daughter</option>
+                </select>
+              </div>
+              <div class="picker-item font-size-item">
+                <label>Size</label>
+                <input type="range" id="fontSizeName" min="32" max="72" value="52">
+              </div>
+            </div>
+          </div>
+
+          <!-- Role Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-laptop-code"></i> Developer Role
+            </div>
+            <div class="input-field">
+              <input type="text" id="inputRole" placeholder="e.g. Full Stack Developer" value="Full Stack Developer" maxlength="32">
+            </div>
+          </div>
+
+          <!-- Builder ID Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-id-badge"></i> Builder ID (Max 6 Chars)
+            </div>
+            <div class="input-field">
+              <input type="text" id="inputBuilderId" placeholder="e.g. HH0026" value="HH0026" maxlength="6">
+            </div>
+          </div>
+
+          <!-- Speciality Tag Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-bolt"></i> Speciality Tag (Pink Box)
+            </div>
+            <div class="input-field">
+              <input type="text" id="inputTag" placeholder="e.g. React Dev" value="React Dev" maxlength="10">
+            </div>
+          </div>
+        </div>
+
+        <!-- BACK SIDE FORM -->
+        <div id="tab-back" class="tab-content">
+          <!-- Team Logo Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-icons"></i> Team Logo
+            </div>
+            <div class="file-upload-box">
+              <input type="file" id="inputTeamLogo" accept="image/*">
+              <label for="inputTeamLogo" class="file-upload-label">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <span id="labelTeamLogoText">Upload Team Logo</span>
+              </label>
+            </div>
+
+            <!-- Logo Positioning & Scale Controls -->
+            <div class="image-adjustments" id="backAdjustments">
+              <div class="adjustment-info">
+                <span><i class="fa-solid fa-hand-pointer"></i> Drag logo on card to reposition</span>
+                <button type="button" class="btn-text" id="btnResetBackImage">Reset</button>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-magnifying-glass-plus"></i> Zoom Scale</label>
+                <input type="range" id="logoZoom" min="0.3" max="3.0" step="0.05" value="1.0">
+                <span class="val-badge" id="logoZoomVal">100%</span>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-arrows-left-right"></i> Move X</label>
+                <input type="range" id="logoPosX" min="-250" max="250" step="1" value="0">
+                <span class="val-badge" id="logoPosXVal">0px</span>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-arrows-up-down"></i> Move Y</label>
+                <input type="range" id="logoPosY" min="-250" max="250" step="1" value="0">
+                <span class="val-badge" id="logoPosYVal">0px</span>
+              </div>
+              <div class="slider-control">
+                <label><i class="fa-solid fa-rotate"></i> Rotate</label>
+                <input type="range" id="logoRotate" min="-180" max="180" step="1" value="0">
+                <span class="val-badge" id="logoRotateVal">0°</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Team Name Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-users"></i> Team Name
+            </div>
+            <div class="input-field">
+              <input type="text" id="inputTeamName" placeholder="e.g. Cyber Punks" value="CYBER PUNKS" maxlength="18">
+            </div>
+            <div class="font-picker-row">
+              <div class="picker-item">
+                <label>Font Vibe</label>
+                <select id="fontTeamSelect">
+                  <option value="Caveat">Caveat (Handwritten)</option>
+                  <option value="Permanent Marker" selected>Permanent Marker</option>
+                  <option value="Kalam">Kalam (Artistic)</option>
+                  <option value="Rock Salt">Rock Salt (Raw)</option>
+                  <option value="Architects Daughter">Architects Daughter</option>
+                </select>
+              </div>
+              <div class="picker-item font-size-item">
+                <label>Size</label>
+                <input type="range" id="fontSizeTeam" min="32" max="72" value="54">
+              </div>
+            </div>
+          </div>
+
+          <!-- Team Slogan Section -->
+          <div class="control-group">
+            <div class="group-title">
+              <i class="fa-solid fa-quote-left"></i> Team Slogan
+            </div>
+            <div class="input-field">
+              <input type="text" id="inputTeamSlogan" placeholder="e.g. Ride The Waves!" value="Ride The Waves!" maxlength="18">
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Panel: Live Card Preview Area -->
+      <section class="preview-area">
+        <div class="preview-toolbar">
+          <div class="view-switch">
+            <button class="view-btn active" data-view="both">
+              <i class="fa-solid fa-grip"></i> Dual View
+            </button>
+            <button class="view-btn" data-view="front">
+              <i class="fa-solid fa-square-full"></i> Front Pass
+            </button>
+            <button class="view-btn" data-view="back">
+              <i class="fa-solid fa-square-full"></i> Back Pass
+            </button>
+          </div>
+          <div class="preview-hint">
+            <i class="fa-solid fa-circle-info"></i> Interactive high-res live view. Drag photos directly on card to adjust position.
+          </div>
+        </div>
+
+        <div class="cards-display grid-both" id="cardsDisplay">
+          <!-- FRONT CARD WRAPPER -->
+          <div class="card-box" id="cardBoxFront">
+            <div class="card-header-tag">FRONT SIDE PASS</div>
+            <div class="card-viewport">
+              <canvas id="frontCanvas" width="1254" height="1254"></canvas>
+              <!-- Interactive Drag Overlay -->
+              <div class="drag-hint-overlay" id="frontDragHint">
+                <div class="drag-circle-guide"></div>
+                <div class="drag-tooltip"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to adjust photo</div>
+              </div>
+            </div>
+            <div class="card-footer-controls">
+              <button class="btn btn-sm btn-subtle" onclick="triggerProfileUpload()">
+                <i class="fa-solid fa-image"></i> Change Photo
+              </button>
+              <button class="btn btn-sm btn-subtle" onclick="downloadSinglePass('front')">
+                <i class="fa-solid fa-download"></i> Save Front PNG
+              </button>
+            </div>
+          </div>
+
+          <!-- BACK CARD WRAPPER -->
+          <div class="card-box" id="cardBoxBack">
+            <div class="card-header-tag">BACK SIDE PASS</div>
+            <div class="card-viewport">
+              <canvas id="backCanvas" width="1254" height="1254"></canvas>
+              <!-- Interactive Drag Overlay -->
+              <div class="drag-hint-overlay" id="backDragHint">
+                <div class="drag-circle-guide logo-guide"></div>
+                <div class="drag-tooltip"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to adjust logo</div>
+              </div>
+            </div>
+            <div class="card-footer-controls">
+              <button class="btn btn-sm btn-subtle" onclick="triggerLogoUpload()">
+                <i class="fa-solid fa-image"></i> Change Logo
+              </button>
+              <button class="btn btn-sm btn-subtle" onclick="downloadSinglePass('back')">
+                <i class="fa-solid fa-download"></i> Save Back PNG
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
