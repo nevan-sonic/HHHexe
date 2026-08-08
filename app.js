@@ -58,6 +58,34 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ── Helpers ─────────────────────────────────────── */
+  function processImageFile(file, callback) {
+    if (!file) return;
+    const loadStandardImage = fileObj => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const img = new Image();
+        img.onload = () => callback(img);
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(fileObj);
+    };
+
+    if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
+      if (window.heic2any) {
+        heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
+          .then(conversionResult => {
+            const blob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+            loadStandardImage(blob);
+          })
+          .catch(() => loadStandardImage(file));
+      } else {
+        loadStandardImage(file);
+      }
+    } else {
+      loadStandardImage(file);
+    }
+  }
+
   function fitFont(ctx, text, base, family, weight, maxW, min=12) {
     let s = base;
     ctx.font = `${weight} ${s}px "${family}", sans-serif`;
@@ -408,6 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('labelProfilePicText').textContent = file.name;
       renderFront(); renderPfp();
     });
+    e.target.value = '';
   });
 
   // Back Controls
