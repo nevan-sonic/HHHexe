@@ -831,16 +831,15 @@ input[type="range"]::-webkit-slider-thumb:hover {
     font-size: 0.8rem;
   }
 
-  /* Mobile Sticky Live Preview Header */
+  /* Mobile Live Preview Header (Positioned at top, non-sticky to prevent covering controls) */
   .preview-area {
     order: -1;
-    position: sticky;
-    top: 0;
-    z-index: 95;
-    background: var(--goa-darkest);
-    padding: 0.4rem 0 0.6rem 0;
-    border-bottom: 2px solid var(--goa-green);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+    position: relative;
+    z-index: 1;
+    background: transparent;
+    padding: 0;
+    border-bottom: none;
+    box-shadow: none;
   }
 
   /* Card Display Grid */
