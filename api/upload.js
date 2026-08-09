@@ -43,14 +43,31 @@ module.exports = async (req, res) => {
 };
 
 async function uploadWithFallbacks(buffer, filename, mime) {
-  const attempts = [uploadLitterbox, uploadTmpfiles];
+  // Prefer permanent catbox URLs (shorter + more crawler-friendly), then temp hosts
+  const attempts = [uploadCatbox, uploadLitterbox, uploadTmpfiles];
   for (const fn of attempts) {
     try {
       const url = await fn(buffer, filename, mime);
-      if (url && /^https?:\/\//i.test(url)) return url.trim();
+      if (url && /^https?:\/\//i.test(url)) return url.trim().replace(/^http:\/\//i, 'https://');
     } catch (_) { /* try next */ }
   }
   return null;
+}
+
+async function uploadCatbox(buffer, filename, mime) {
+  const form = new FormData();
+  form.append('reqtype', 'fileupload');
+  form.append('fileToUpload', new Blob([buffer], { type: mime }), filename);
+
+  const r = await fetch('https://catbox.moe/user/api.php', {
+    method: 'POST',
+    body: form,
+  });
+  const text = (await r.text()).trim();
+  if (!r.ok || !text.startsWith('http')) {
+    throw new Error(text || 'catbox failed');
+  }
+  return text;
 }
 
 async function uploadLitterbox(buffer, filename, mime) {
