@@ -1084,49 +1084,91 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${base}?${params.toString()}`;
   }
 
-  function tweetIntentUrl(text, linkUrl) {
+  function tweetWebUrl(text, linkUrl) {
     const t = encodeURIComponent(text);
     const u = encodeURIComponent(linkUrl || PROD_ORIGIN);
-    // twitter.com intent — opens installed X app on mobile (their proven path)
-    return `https://twitter.com/intent/tweet?text=${t}&url=${u}`;
+    return `https://x.com/intent/tweet?text=${t}&url=${u}`;
   }
 
+  function isMobileUA() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || '');
+  }
+
+  /**
+   * Force native X / Twitter app. Website intent is ONLY used if the app
+   * is missing / does not take over the page.
+   */
   function openXCompose(text, linkUrl, preOpened) {
-    const intent = tweetIntentUrl(text, linkUrl);
+    const webUrl = tweetWebUrl(text, linkUrl);
+    const message = `${text} ${linkUrl || PROD_ORIGIN}`;
     const ua = navigator.userAgent || '';
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isAndroid = /Android/i.test(ua);
-    const message = `${text} ${linkUrl || PROD_ORIGIN}`;
+
+    // Never leave a blank browser tab hanging on mobile
+    if (preOpened && !preOpened.closed && (isIOS || isAndroid)) {
+      try { preOpened.close(); } catch (_) { /* ignore */ }
+    }
 
     if (isAndroid) {
-      if (preOpened && !preOpened.closed) preOpened.close();
-      const intentUrl =
+      // package=com.twitter.android forces the X app; browser_fallback only if not installed
+      const appIntent =
+        `intent://x.com/intent/tweet?text=${encodeURIComponent(text)}` +
+        `&url=${encodeURIComponent(linkUrl || PROD_ORIGIN)}` +
+        `#Intent;scheme=https;package=com.twitter.android;` +
+        `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+
+      // Secondary: classic twitter:// scheme via the same package
+      const schemeIntent =
         `intent://post?message=${encodeURIComponent(message)}` +
         `#Intent;scheme=twitter;package=com.twitter.android;` +
-        `S.browser_fallback_url=${encodeURIComponent(intent)};end`;
-      window.location.href = intentUrl;
+        `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
+
+      window.location.href = appIntent;
+      // If the first intent is ignored by a weird WebView, retry scheme form briefly
+      setTimeout(() => {
+        if (!document.hidden) window.location.href = schemeIntent;
+      }, 400);
       return;
     }
 
     if (isIOS) {
-      if (preOpened && !preOpened.closed) preOpened.close();
-      const deepLink = `twitter://post?message=${encodeURIComponent(message)}`;
-      const started = Date.now();
-      window.location.href = deepLink;
+      let appTookOver = false;
+      const markOpened = () => { appTookOver = true; };
+      document.addEventListener('visibilitychange', markOpened);
+      window.addEventListener('pagehide', markOpened);
+      window.addEventListener('blur', markOpened);
+
+      // App-only deep links first (never open x.com until we know app failed)
+      const deepLinks = [
+        `twitter://post?message=${encodeURIComponent(message)}`,
+        `twitter://post?text=${encodeURIComponent(message)}`,
+      ];
+      window.location.href = deepLinks[0];
       setTimeout(() => {
-        if (!document.hidden && Date.now() - started < 1600) {
-          window.location.href = intent;
+        if (!appTookOver && !document.hidden) {
+          window.location.href = deepLinks[1];
         }
-      }, 900);
+      }, 250);
+
+      setTimeout(() => {
+        document.removeEventListener('visibilitychange', markOpened);
+        window.removeEventListener('pagehide', markOpened);
+        window.removeEventListener('blur', markOpened);
+        // Website ONLY if the app never hid this page
+        if (!appTookOver && !document.hidden) {
+          window.location.href = webUrl;
+        }
+      }, 1400);
       return;
     }
 
-    // Desktop: navigate the sync-opened window (avoids popup blocker after await)
+    // Desktop: website compose (no reliable X app deep link)
     if (preOpened && !preOpened.closed) {
-      preOpened.location.href = intent;
+      preOpened.location.href = webUrl;
       return;
     }
-    window.open(intent, '_blank');
+    window.open(webUrl, '_blank', 'noopener,noreferrer');
   }
 
   function setShareButtonsBusy(busy) {
@@ -1180,8 +1222,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (_) { /* ignore */ }
     }
 
-    // 2. Open a blank window synchronously under the click (their window.open pattern)
-    const preOpened = window.open('about:blank', '_blank');
+    // Desktop only: reserve a window under the user gesture (mobile uses app deep links)
+    const preOpened = isMobileUA() ? null : window.open('about:blank', '_blank');
 
     setShareButtonsBusy(true);
     try {
