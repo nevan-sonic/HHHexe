@@ -597,7 +597,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const doDrag = e => {
       if (!dragging) return;
       if (e.touches && e.touches.length > 1) return;
-      e.preventDefault();
       const c = coords(e);
       const newX = Math.round(ox + (c.x - sx));
       const newY = Math.round(oy + (c.y - sy));
@@ -681,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (dragging) {
         doDrag(e);
       }
-    }, { passive: false });
+    }, { passive: true });
 
     window.addEventListener('touchend', e => {
       if (e.touches.length < 2) pinchDist = 0;
@@ -787,6 +786,22 @@ document.addEventListener('DOMContentLoaded', () => {
       filename = 'HackerHouse_Goa_Front_Pass.png';
     }
 
+    const shareUrl = window.location.href;
+    const launchXIntent = () => {
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const webUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+      if (isMobile) {
+        // Deep link to open installed X/Twitter app directly on iOS & Android
+        const deepLink = `twitter://post?message=${encodeURIComponent(text + " " + shareUrl)}`;
+        window.location.href = deepLink;
+        setTimeout(() => {
+          window.open(webUrl, '_blank');
+        }, 600);
+      } else {
+        window.open(webUrl, '_blank');
+      }
+    };
+
     if (canvas && canvas.toBlob) {
       canvas.toBlob(blob => {
         if (blob) {
@@ -797,18 +812,15 @@ document.addEventListener('DOMContentLoaded', () => {
               text: text,
               files: [file]
             }).catch(() => {
-              const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-              window.open(tweetUrl, '_blank');
+              launchXIntent();
             });
             return;
           }
         }
-        const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-        window.open(tweetUrl, '_blank');
+        launchXIntent();
       }, 'image/png', 1.0);
     } else {
-      const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
-      window.open(tweetUrl, '_blank');
+      launchXIntent();
     }
   };
 
