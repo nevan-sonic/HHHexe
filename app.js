@@ -766,35 +766,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ── Share to X ──────────────────────────────────── */
-  function fallbackShare(blob, filename, text) {
-    // 1. Download image to user's gallery / downloads
-    const a = document.createElement('a');
-    a.download = filename;
-    a.href = URL.createObjectURL(blob);
-    a.click();
-
-    // 2. Copy image to clipboard if supported
-    if (navigator.clipboard && window.ClipboardItem) {
-      try {
-        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).catch(() => {});
-      } catch (e) {}
-    }
-
-    // 3. Launch X tweet intent after short delay
-    setTimeout(() => {
-      const shareUrl = window.location.href;
-      const intentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
-      window.open(intentUrl, '_blank');
-    }, 400);
-  }
-
   window.shareToX = side => {
-    let text = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
+    const shareUrl = 'https://hhhexe.vercel.app/';
+    let text = `Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa ${shareUrl}`;
     let canvas = frontCanvas;
     let filename = 'HackerHouse_Goa_Front_Pass.png';
 
     if (side === 'pfp') {
-      text = "Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa";
+      text = `Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa ${shareUrl}`;
       renderPfp();
       canvas = pfpCanvas;
       filename = 'HackerHouse_Goa_X_Profile_Frame.png';
@@ -808,27 +787,21 @@ document.addEventListener('DOMContentLoaded', () => {
       filename = 'HackerHouse_Goa_Front_Pass.png';
     }
 
-    if (!canvas) return;
+    // 1. Download image to user's device gallery for optional manual attachment
+    if (canvas && canvas.toBlob) {
+      canvas.toBlob(blob => {
+        if (blob) {
+          const a = document.createElement('a');
+          a.download = filename;
+          a.href = URL.createObjectURL(blob);
+          a.click();
+        }
+      }, 'image/png', 1.0);
+    }
 
-    canvas.toBlob(blob => {
-      if (!blob) return;
-
-      const file = new File([blob], filename, { type: 'image/png' });
-
-      // If Web Share API with files is supported (iOS Safari / Android Chrome)
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        navigator.share({
-          title: 'Hacker House Goa 2026',
-          text: text,
-          files: [file]
-        }).catch(() => {
-          fallbackShare(blob, filename, text);
-        });
-      } else {
-        // Fallback for Desktop & Unsupported Browsers: Download image + copy + open X Intent
-        fallbackShare(blob, filename, text);
-      }
-    }, 'image/png', 1.0);
+    // 2. Open X Intent with pre-filled text & URL (triggers Large Image Card Preview)
+    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(tweetUrl, '_blank');
   };
 
   window.shareCurrentViewToX = () => {
