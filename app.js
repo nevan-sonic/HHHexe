@@ -1074,14 +1074,61 @@ document.addEventListener('DOMContentLoaded', () => {
     return window.location.origin;
   }
 
-  function buildShareCardUrl(imageUrl, kind, name) {
+  function buildShareCardUrl(imageUrl, kind, meta = {}) {
     const base = `${shareApiOrigin()}/api/card`;
     const params = new URLSearchParams({
       img: imageUrl,
       kind: kind || 'pfp',
     });
-    if (name) params.set('name', name);
+    if (meta.name) params.set('name', meta.name);
+    if (meta.role) params.set('role', meta.role);
+    if (meta.team) params.set('team', meta.team);
     return `${base}?${params.toString()}`;
+  }
+
+  function buildExcitedShareText(side) {
+    const name = (S.front.name || '').trim();
+    const role = (S.front.role || '').trim();
+    const title = (S.front.tag || '').trim();
+    const id = (S.front.builderId || '').trim();
+    const team = (S.back.teamName || '').trim();
+    const slogan = (S.back.teamSlogan || '').trim();
+
+    const detailBits = [name, role, title, id ? `ID ${id.toUpperCase()}` : '']
+      .filter(Boolean)
+      .join(' · ');
+    const teamLine = team
+      ? `Team ${team}${slogan ? ` — ${slogan}` : ''}`
+      : '';
+
+    // No second URL in text — X drops cards when a tweet has multiple links.
+    // Studio CTA lives on the preview card page button instead.
+    if (side === 'pfp') {
+      return [
+        'Excited to share my Hacker House Goa 2026 PFP!',
+        detailBits,
+        teamLine,
+        'See you in Goa! #FrameInGoa',
+        'Try it now and generate yours',
+      ].filter(Boolean).join('\n');
+    }
+
+    if (side === 'back') {
+      return [
+        `Excited to share our Hacker House Goa 2026 team pass${team ? ` — ${team}` : ''}!`,
+        teamLine || detailBits,
+        'See you in Goa! #FrameInGoa',
+        'Try it now and generate yours',
+      ].filter(Boolean).join('\n');
+    }
+
+    return [
+      'Excited to share my Hacker House Goa 2026 Builder Pass!',
+      detailBits,
+      teamLine,
+      'See you in Goa! #FrameInGoa',
+      'Try it now and generate yours',
+    ].filter(Boolean).join('\n');
   }
 
   function tweetWebUrl(text, linkUrl) {
@@ -1099,8 +1146,10 @@ document.addEventListener('DOMContentLoaded', () => {
    * is missing / does not take over the page.
    */
   function openXCompose(text, linkUrl, preOpened) {
-    const webUrl = tweetWebUrl(text, linkUrl);
-    const message = `${text} ${linkUrl || PROD_ORIGIN}`;
+    // Single URL only (card or studio) — required for X large-image previews
+    const shareLink = linkUrl || PROD_ORIGIN;
+    const webUrl = tweetWebUrl(text, shareLink);
+    const message = `${text}\n${shareLink}`;
     const ua = navigator.userAgent || '';
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isAndroid = /Android/i.test(ua);
@@ -1114,18 +1163,16 @@ document.addEventListener('DOMContentLoaded', () => {
       // package=com.twitter.android forces the X app; browser_fallback only if not installed
       const appIntent =
         `intent://x.com/intent/tweet?text=${encodeURIComponent(text)}` +
-        `&url=${encodeURIComponent(linkUrl || PROD_ORIGIN)}` +
+        `&url=${encodeURIComponent(shareLink)}` +
         `#Intent;scheme=https;package=com.twitter.android;` +
         `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
 
-      // Secondary: classic twitter:// scheme via the same package
       const schemeIntent =
         `intent://post?message=${encodeURIComponent(message)}` +
         `#Intent;scheme=twitter;package=com.twitter.android;` +
         `S.browser_fallback_url=${encodeURIComponent(webUrl)};end`;
 
       window.location.href = appIntent;
-      // If the first intent is ignored by a weird WebView, retry scheme form briefly
       setTimeout(() => {
         if (!document.hidden) window.location.href = schemeIntent;
       }, 400);
@@ -1185,20 +1232,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.shareToX = async side => {
-    const tryItCta = `Try it now and generate yours at ${PROD_ORIGIN}`;
-    let text = `Just generated my official Hacker House Goa 2026 Builder Pass! See you in Goa! #FrameInGoa\n\n${tryItCta}`;
     let canvas = frontCanvas;
     let filename = 'HackerHouse_Goa_Front_Pass.jpg';
     let kind = 'front';
 
     if (side === 'pfp') {
-      text = `Just framed my profile photo for Hacker House Goa 2026! Check out my PFP #FrameInGoa\n\n${tryItCta}`;
       renderPfp();
       canvas = pfpCanvas;
       filename = 'HackerHouse_Goa_X_Profile_Frame.jpg';
       kind = 'pfp';
     } else if (side === 'back') {
-      text = `Our Hacker House Goa 2026 team pass is ready! #FrameInGoa\n\n${tryItCta}`;
       renderBack();
       canvas = backCanvas;
       filename = 'HackerHouse_Goa_Back_Pass.jpg';
@@ -1208,12 +1251,11 @@ document.addEventListener('DOMContentLoaded', () => {
       canvas = frontCanvas;
       filename = 'HackerHouse_Goa_Front_Pass.jpg';
       kind = 'front';
-      if (S.front.name) {
-        text = `${S.front.name} — ${S.front.tag || 'Builder'} at Hacker House Goa 2026! #FrameInGoa\n\n${tryItCta}`;
-      }
     }
 
-    // 1. Instant download (their flow) so the graphic is in Downloads/Recents
+    let text = buildExcitedShareText(kind);
+
+    // 1. Instant download so the graphic is in Downloads/Recents
     if (canvas) {
       try {
         const a = document.createElement('a');
@@ -1231,12 +1273,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
       const dataUrl = await blobToDataURL(blob);
       const imageUrl = await uploadGeneratedImage(dataUrl, filename);
+      // ONE url only = preview card (studio CTA is on that page, not a 2nd tweet link)
       const linkUrl = imageUrl
-        ? buildShareCardUrl(imageUrl, kind, S.front.name)
+        ? buildShareCardUrl(imageUrl, kind, {
+            name: S.front.name,
+            role: S.front.role,
+            team: S.back.teamName,
+          })
         : PROD_ORIGIN;
+      // If we only have the studio homepage, mention it once in text
+      if (!imageUrl) {
+        text = `${text}\n${PROD_ORIGIN}`;
+      }
       openXCompose(text, linkUrl, preOpened);
     } catch (_) {
-      openXCompose(text, PROD_ORIGIN, preOpened);
+      openXCompose(`${text}\n${PROD_ORIGIN}`, PROD_ORIGIN, preOpened);
     } finally {
       setShareButtonsBusy(false);
     }
