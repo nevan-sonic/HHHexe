@@ -766,6 +766,28 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ── Share to X ──────────────────────────────────── */
+  function fallbackShare(blob, filename, text) {
+    // 1. Download image to user's gallery / downloads
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+
+    // 2. Copy image to clipboard if supported
+    if (navigator.clipboard && window.ClipboardItem) {
+      try {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).catch(() => {});
+      } catch (e) {}
+    }
+
+    // 3. Launch X tweet intent after short delay
+    setTimeout(() => {
+      const shareUrl = window.location.href;
+      const intentUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(intentUrl, '_blank');
+    }, 400);
+  }
+
   window.shareToX = side => {
     let text = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
     let canvas = frontCanvas;
@@ -786,42 +808,27 @@ document.addEventListener('DOMContentLoaded', () => {
       filename = 'HackerHouse_Goa_Front_Pass.png';
     }
 
-    const shareUrl = window.location.href;
-    const launchXIntent = () => {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const webUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
-      if (isMobile) {
-        // Deep link to open installed X/Twitter app directly on iOS & Android
-        const deepLink = `twitter://post?message=${encodeURIComponent(text + " " + shareUrl)}`;
-        window.location.href = deepLink;
-        setTimeout(() => {
-          window.open(webUrl, '_blank');
-        }, 600);
-      } else {
-        window.open(webUrl, '_blank');
-      }
-    };
+    if (!canvas) return;
 
-    if (canvas && canvas.toBlob) {
-      canvas.toBlob(blob => {
-        if (blob) {
-          const file = new File([blob], filename, { type: 'image/png' });
-          if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            navigator.share({
-              title: 'Hacker House Goa 2026',
-              text: text,
-              files: [file]
-            }).catch(() => {
-              launchXIntent();
-            });
-            return;
-          }
-        }
-        launchXIntent();
-      }, 'image/png', 1.0);
-    } else {
-      launchXIntent();
-    }
+    canvas.toBlob(blob => {
+      if (!blob) return;
+
+      const file = new File([blob], filename, { type: 'image/png' });
+
+      // If Web Share API with files is supported (iOS Safari / Android Chrome)
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          title: 'Hacker House Goa 2026',
+          text: text,
+          files: [file]
+        }).catch(() => {
+          fallbackShare(blob, filename, text);
+        });
+      } else {
+        // Fallback for Desktop & Unsupported Browsers: Download image + copy + open X Intent
+        fallbackShare(blob, filename, text);
+      }
+    }, 'image/png', 1.0);
   };
 
   window.shareCurrentViewToX = () => {
