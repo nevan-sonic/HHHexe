@@ -1185,19 +1185,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.shareToX = async side => {
-    let text = 'Just generated my official Hacker House Goa 2026 Builder Pass! See you in Goa! #FrameInGoa';
+    const tryItCta = `Try it now and generate yours at ${PROD_ORIGIN}`;
+    let text = `Just generated my official Hacker House Goa 2026 Builder Pass! See you in Goa! #FrameInGoa\n\n${tryItCta}`;
     let canvas = frontCanvas;
     let filename = 'HackerHouse_Goa_Front_Pass.jpg';
     let kind = 'front';
 
     if (side === 'pfp') {
-      text = 'Just framed my profile photo for Hacker House Goa 2026! Check out my PFP #FrameInGoa';
+      text = `Just framed my profile photo for Hacker House Goa 2026! Check out my PFP #FrameInGoa\n\n${tryItCta}`;
       renderPfp();
       canvas = pfpCanvas;
       filename = 'HackerHouse_Goa_X_Profile_Frame.jpg';
       kind = 'pfp';
     } else if (side === 'back') {
-      text = 'Our Hacker House Goa 2026 team pass is ready! #FrameInGoa';
+      text = `Our Hacker House Goa 2026 team pass is ready! #FrameInGoa\n\n${tryItCta}`;
       renderBack();
       canvas = backCanvas;
       filename = 'HackerHouse_Goa_Back_Pass.jpg';
@@ -1208,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       filename = 'HackerHouse_Goa_Front_Pass.jpg';
       kind = 'front';
       if (S.front.name) {
-        text = `${S.front.name} — ${S.front.tag || 'Builder'} at Hacker House Goa 2026! #FrameInGoa`;
+        text = `${S.front.name} — ${S.front.tag || 'Builder'} at Hacker House Goa 2026! #FrameInGoa\n\n${tryItCta}`;
       }
     }
 
