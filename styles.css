@@ -671,7 +671,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .card-box {
   width: 100%;
-  max-width: 580px;
+  max-width: min(480px, 100%);
 }
 
 /* Single Card Box Frame */
@@ -679,18 +679,19 @@ input[type="range"]::-webkit-slider-thumb:hover {
   background: linear-gradient(145deg, #012e17, #001f0f);
   border: 2px solid var(--goa-yellow);
   border-radius: var(--radius-xl);
-  padding: 1.35rem;
+  padding: 1.1rem 1.1rem 1.25rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), var(--shadow-retro-pink);
   position: relative;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  overflow: visible;
+  transition: box-shadow 0.25s ease;
 }
 
 .card-box:hover {
-  transform: translateY(-4px);
+  /* No translateY — it was clipping the card top against sticky header / parents */
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(255, 230, 0, 0.25);
 }
 
@@ -706,23 +707,29 @@ input[type="range"]::-webkit-slider-thumb:hover {
   letter-spacing: 0.08em;
 }
 
-/* Canvas Viewport */
+/* Canvas Viewport — keep full card visible (no rounded clip on the art) */
 .card-viewport {
   position: relative;
-  width: 100%;
+  /* Width follows max-height so aspect ratio never crops the canvas */
+  width: min(100%, calc(min(72vh, 820px) * 722 / 1099));
+  max-width: 100%;
+  max-height: min(72vh, 820px);
   aspect-ratio: 722 / 1099;
-  background: transparent;
-  border-radius: var(--radius-lg);
+  height: auto;
+  background: #00180c;
+  border-radius: 4px;
   overflow: hidden;
   border: 2px solid var(--goa-green);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  margin-inline: auto;
 }
 
 .card-viewport canvas {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: fill;
+  vertical-align: top;
   /* Allow page scroll by default; JS only captures inside the photo circle */
   touch-action: pan-y;
 }
@@ -733,6 +740,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .card-viewport.pfp-viewport {
   aspect-ratio: 1 / 1 !important;
+  max-height: min(62vh, 520px);
+  width: min(100%, calc(min(62vh, 520px) * 1));
 }
 
 /* Interactive Drag Overlay Hint — shown once via .is-visible, never on :hover */
