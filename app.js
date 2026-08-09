@@ -766,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ── Share to X ──────────────────────────────────── */
-  window.shareToX = side => {
+  window.shareToX = async side => {
     let rawText = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
     let canvas = frontCanvas;
     let filename = 'HackerHouse_Goa_Front_Pass.png';
@@ -786,26 +786,38 @@ document.addEventListener('DOMContentLoaded', () => {
       filename = 'HackerHouse_Goa_Front_Pass.png';
     }
 
-    // 1. Download image to user's device gallery so graphic is saved in recents
-    if (canvas && canvas.toBlob) {
-      canvas.toBlob(blob => {
-        if (blob) {
-          const a = document.createElement('a');
-          a.download = filename;
-          a.href = URL.createObjectURL(blob);
-          a.click();
-        }
-      }, 'image/png', 1.0);
+    if (!canvas) return;
+
+    // Convert canvas graphic to File object
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return;
+
+    const file = new File([blob], filename, { type: 'image/png' });
+    const shareData = {
+      title: 'Hacker House Goa 2026',
+      text: `${rawText} https://hhhexe.vercel.app/`,
+      files: [file]
+    };
+
+    // 1. Native Web Share API (attaches custom image file directly to X on mobile)
+    if (navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') return;
+      }
     }
 
-    // 2. Open X Tweet Composer directly using text and url parameters
+    // 2. Fallback for Desktop & Unsupported Browsers: Download image + open Tweet Intent
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+
     const text = encodeURIComponent(rawText);
     const url = encodeURIComponent('https://hhhexe.vercel.app/');
-
-    window.open(
-      `https://x.com/intent/tweet?text=${text}&url=${url}`,
-      '_blank'
-    );
+    window.open(`https://x.com/intent/tweet?text=${text}&url=${url}`, '_blank');
   };
 
   window.shareCurrentViewToX = () => {
