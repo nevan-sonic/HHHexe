@@ -5,6 +5,17 @@
  * GET /api/card?img=<https-image-url>&kind=pfp|front|back&name=...
  */
 module.exports = async (req, res) => {
+  // Twitterbot may HEAD the card page before GET
+  if (req.method === 'HEAD') {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    return res.end();
+  }
+  if (req.method !== 'GET') {
+    res.statusCode = 405;
+    return res.end('Method not allowed');
+  }
+
   const q = req.query || {};
   const img = typeof q.img === 'string' ? q.img.trim() : '';
   const kind = typeof q.kind === 'string' ? q.kind : 'pfp';
@@ -64,7 +75,6 @@ module.exports = async (req, res) => {
   <meta property="og:description" content="${safeDesc}">
   <meta property="og:image" content="${safeImg}">
   <meta property="og:image:secure_url" content="${safeImg}">
-  <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:alt" content="${safeTitle}">
   <meta property="og:url" content="${pageUrl}">
   <meta name="twitter:card" content="summary_large_image">
