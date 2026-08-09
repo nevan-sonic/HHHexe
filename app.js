@@ -998,25 +998,33 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── Downloads ───────────────────────────────────── */
   window.downloadSinglePass = side => {
     let canvas = frontCanvas;
-    let filename = 'HackerHouse_Goa_Front_Pass.png';
+    let filename = 'HackerHouse_Goa_ID_Card_Front.png';
     if (side === 'front') {
       renderFront();
       canvas = frontCanvas;
-      filename = 'HackerHouse_Goa_Front_Pass.png';
+      filename = 'HackerHouse_Goa_ID_Card_Front.png';
     } else if (side === 'back') {
       renderBack();
       canvas = backCanvas;
-      filename = 'HackerHouse_Goa_Back_Pass.png';
+      filename = 'HackerHouse_Goa_ID_Card_Back.png';
     } else if (side === 'pfp') {
       renderPfp();
       canvas = pfpCanvas;
-      filename = 'HackerHouse_Goa_X_Profile_Frame.png';
+      filename = 'HackerHouse_Goa_PFP_Frame.png';
     }
     const a = document.createElement('a');
     a.download = filename;
     a.href = canvas.toDataURL('image/png', 1.0);
     a.click();
   };
+
+  function downloadAllThreePics() {
+    renderAll();
+    // Stagger so browsers don't collapse multiple download clicks
+    downloadSinglePass('front');
+    setTimeout(() => downloadSinglePass('back'), 450);
+    setTimeout(() => downloadSinglePass('pfp'), 900);
+  }
 
   /* ── Share to X (their sync intent launcher + our upload/OG preview) ── */
   const PROD_ORIGIN = 'https://hhhexe.vercel.app';
@@ -1301,22 +1309,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnDownloadFront').addEventListener('click', () => downloadSinglePass('front'));
   document.getElementById('btnDownloadBack').addEventListener('click',  () => downloadSinglePass('back'));
 
-  document.getElementById('btnDownloadBoth').addEventListener('click', () => {
-    renderAll();
-    const fUrl = frontCanvas.toDataURL('image/png', 1.0);
-    const bUrl = backCanvas.toDataURL('image/png', 1.0);
-    const pUrl = pfpCanvas ? pfpCanvas.toDataURL('image/png', 1.0) : null;
-    if (window.JSZip && window.saveAs) {
-      const zip = new JSZip();
-      zip.file('HackerHouse_Goa_Front_Pass.png', fUrl.split(',')[1], {base64:true});
-      zip.file('HackerHouse_Goa_Back_Pass.png',  bUrl.split(',')[1], {base64:true});
-      if (pUrl) zip.file('HackerHouse_Goa_X_Profile_Frame.png', pUrl.split(',')[1], {base64:true});
-      zip.generateAsync({type:'blob'}).then(blob => saveAs(blob, 'HackerHouse_Goa_Studio_Assets.zip'));
-    } else {
-      downloadSinglePass('front');
-      setTimeout(() => downloadSinglePass('back'), 400);
-      setTimeout(() => downloadSinglePass('pfp'), 800);
-    }
-  });
+  document.getElementById('btnDownloadBoth').addEventListener('click', downloadAllThreePics);
 
 });

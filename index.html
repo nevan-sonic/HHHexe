@@ -31,7 +31,7 @@
   <!-- HEIC/HEIF (iPhone) → JPEG -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   
-  <link rel="stylesheet" href="styles.css?v=2.2.6">
+  <link rel="stylesheet" href="styles.css?v=2.2.8">
 </head>
 <body>
   <div class="app-container">
@@ -47,18 +47,28 @@
         </div>
       </div>
       
-      <div class="header-actions">
-        <button id="btnDownloadFront" class="btn btn-outline-yellow">
-          <i class="fa-solid fa-download"></i> Front Pass
-        </button>
-        <button id="btnDownloadBack" class="btn btn-outline-yellow">
-          <i class="fa-solid fa-download"></i> Back Pass
-        </button>
-        <button id="btnDownloadPfp" class="btn btn-outline-yellow">
-          <i class="fa-solid fa-circle-user"></i> X Profile
-        </button>
-        <button id="btnDownloadBoth" class="btn btn-pink-glow">
-          <i class="fa-solid fa-file-zipper"></i> Download All (HD)
+      <div class="header-actions" role="group" aria-label="Download options">
+        <div class="header-actions-secondary">
+          <button id="btnDownloadFront" class="btn btn-outline-yellow btn-header" type="button" title="Download ID card front">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            <span class="btn-label-full">ID Card Front</span>
+            <span class="btn-label-short">ID Front</span>
+          </button>
+          <button id="btnDownloadBack" class="btn btn-outline-yellow btn-header" type="button" title="Download ID card back">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            <span class="btn-label-full">ID Card Back</span>
+            <span class="btn-label-short">ID Back</span>
+          </button>
+          <button id="btnDownloadPfp" class="btn btn-outline-yellow btn-header" type="button" title="Download PFP frame">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            <span class="btn-label-full">PFP Frame</span>
+            <span class="btn-label-short">PFP Frame</span>
+          </button>
+        </div>
+        <button id="btnDownloadBoth" class="btn btn-pink-glow btn-header btn-header-primary" type="button" title="Download all 3 images">
+          <i class="fa-solid fa-download" aria-hidden="true"></i>
+          <span class="btn-label-full">Download All (3 pics)</span>
+          <span class="btn-label-short">Download All</span>
         </button>
       </div>
     </header>
@@ -263,13 +273,13 @@
         <div class="preview-toolbar">
           <div class="view-switch">
             <button class="view-btn active" data-view="front">
-              <i class="fa-solid fa-id-card"></i> Front Pass
+              <i class="fa-solid fa-id-card"></i> ID Card Front
             </button>
             <button class="view-btn" data-view="back">
-              <i class="fa-solid fa-shield-halved"></i> Back Pass
+              <i class="fa-solid fa-shield-halved"></i> ID Card Back
             </button>
             <button class="view-btn" data-view="pfp">
-              <i class="fa-solid fa-circle-user"></i> X Profile
+              <i class="fa-solid fa-circle-user"></i> PFP Frame
             </button>
           </div>
         </div>
@@ -277,7 +287,7 @@
         <div class="cards-display grid-single" id="cardsDisplay">
           <!-- FRONT CARD WRAPPER -->
           <div class="card-box" id="cardBoxFront">
-            <div class="card-header-tag">FRONT SIDE PASS</div>
+            <div class="card-header-tag">ID CARD FRONT</div>
             <div class="card-viewport">
               <canvas id="frontCanvas" width="722" height="1099"></canvas>
               <!-- Interactive Drag Overlay -->
@@ -302,7 +312,7 @@
 
           <!-- BACK CARD WRAPPER -->
           <div class="card-box" id="cardBoxBack" style="display: none;">
-            <div class="card-header-tag">BACK SIDE PASS</div>
+            <div class="card-header-tag">ID CARD BACK</div>
             <div class="card-viewport">
               <canvas id="backCanvas" width="722" height="1099"></canvas>
               <!-- Interactive Drag Overlay -->
@@ -327,7 +337,7 @@
 
           <!-- X PFP FRAME WRAPPER -->
           <div class="card-box" id="cardBoxPfp" style="display: none;">
-            <div class="card-header-tag">X PROFILE FRAME</div>
+            <div class="card-header-tag">PFP FRAME</div>
             <div class="card-viewport pfp-viewport">
               <canvas id="pfpCanvas" width="1024" height="1024"></canvas>
               <!-- Interactive Drag Overlay -->
@@ -354,6 +364,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=2.2.6"></script>
+  <script src="app.js?v=2.2.8"></script>
 </body>
 </html>
