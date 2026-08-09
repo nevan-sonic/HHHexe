@@ -28,8 +28,10 @@
   <!-- JSZip & FileSaver for Batch Download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <!-- HEIC/HEIF (iPhone) → JPEG -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   
-  <link rel="stylesheet" href="styles.css?v=2.1.0">
+  <link rel="stylesheet" href="styles.css?v=2.2.0">
 </head>
 <body>
   <div class="app-container">
@@ -74,10 +76,10 @@
               <i class="fa-solid fa-camera"></i> Profile Picture
             </div>
             <div class="file-upload-box">
-              <input type="file" id="inputProfilePic" accept="image/*">
+              <input type="file" id="inputProfilePic" accept="image/*,.heic,.heif,image/heic,image/heif">
               <label for="inputProfilePic" class="file-upload-label">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
-                <span id="labelProfilePicText">Upload Profile Photo</span>
+                <span id="labelProfilePicText">Upload Profile Photo (JPG, PNG, HEIC)</span>
               </label>
             </div>
 
@@ -158,14 +160,18 @@
               </div>
             </div>
 
-            <!-- Speciality Tag Section -->
+            <!-- Builder Title (auto-generated, editable) -->
             <div class="control-group">
               <div class="group-title">
-                <i class="fa-solid fa-bolt"></i> Speciality Tag
+                <i class="fa-solid fa-bolt"></i> Builder Title
+                <button type="button" class="btn-text" id="btnRegenTitle" title="Generate a new title">
+                  <i class="fa-solid fa-shuffle"></i> Shuffle
+                </button>
               </div>
               <div class="input-field">
-                <input type="text" id="inputTag" placeholder="e.g. React Dev" value="React Dev" maxlength="10">
+                <input type="text" id="inputTag" placeholder="e.g. Wave Rider" value="Wave Rider" maxlength="14">
               </div>
+              <p class="field-hint">Auto-generated from your name &amp; role — edit or shuffle anytime.</p>
             </div>
           </div>
         </div>
@@ -178,7 +184,7 @@
               <i class="fa-solid fa-icons"></i> Team Logo
             </div>
             <div class="file-upload-box">
-              <input type="file" id="inputTeamLogo" accept="image/*">
+              <input type="file" id="inputTeamLogo" accept="image/*,.heic,.heif,image/heic,image/heif">
               <label for="inputTeamLogo" class="file-upload-label">
                 <i class="fa-solid fa-cloud-arrow-up"></i>
                 <span id="labelTeamLogoText">Upload Team Logo</span>
@@ -284,6 +290,9 @@
               <button class="btn btn-sm btn-subtle" onclick="triggerProfileUpload()">
                 <i class="fa-solid fa-image"></i> Change Photo
               </button>
+              <button class="btn btn-sm btn-x-share" onclick="shareToX('front')">
+                <i class="fa-brands fa-x-twitter"></i> Share to X
+              </button>
             </div>
           </div>
 
@@ -301,6 +310,9 @@
             <div class="card-footer-controls">
               <button class="btn btn-sm btn-subtle" onclick="triggerLogoUpload()">
                 <i class="fa-solid fa-image"></i> Change Logo
+              </button>
+              <button class="btn btn-sm btn-x-share" onclick="shareToX('back')">
+                <i class="fa-brands fa-x-twitter"></i> Share to X
               </button>
             </div>
           </div>
@@ -330,6 +342,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=2.1.0"></script>
+  <script src="app.js?v=2.2.0"></script>
 </body>
 </html>

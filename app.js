@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
       name: 'Nevan Alvares', fontName: 'Caveat', fontSizeName: 52,
       role: 'Full Stack Developer',
       builderId: document.getElementById('inputBuilderId') ? document.getElementById('inputBuilderId').value : 'HH0026',
-      tag: 'React Dev',
+      tag: 'Wave Rider',
       image: null, img: { x:0, y:0, scale:1, rotate:0 }
     },
     back: {
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     nameCenter:   { x:361, y:675 }, nameAngle: -1.2 * Math.PI/180, maxNameW: 390,
     roleCenter:   { x:361, y:747 }, maxRoleW: 440,
     idCenter:     { x:224, y:845 }, maxIdW: 200,       // Builder ID box
-    tagCenter:    { x:311, y:938 }, maxTagW: 170
+    tagCenter:    { x:311, y:938 }, maxTagW: 200
   };
   const BC = {
     circleCenter:    { x:361, y:454 }, circleRadius: 210,
@@ -66,32 +66,96 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /* ── Helpers ─────────────────────────────────────── */
-  function processImageFile(file, callback) {
+  function isHeicFile(file) {
+    const name = (file.name || '').toLowerCase();
+    const type = (file.type || '').toLowerCase();
+    return (
+      name.endsWith('.heic') ||
+      name.endsWith('.heif') ||
+      type === 'image/heic' ||
+      type === 'image/heif' ||
+      type === 'image/heic-sequence' ||
+      type === 'image/heif-sequence'
+    );
+  }
+
+  function processImageFile(file, callback, onError) {
     if (!file) return;
+    const fail = msg => {
+      if (typeof onError === 'function') onError(msg);
+      else alert(msg);
+    };
     const loadStandardImage = fileObj => {
       const reader = new FileReader();
+      reader.onerror = () => fail('Could not read that image file.');
       reader.onload = ev => {
         const img = new Image();
         img.onload = () => callback(img);
+        img.onerror = () => fail('Could not decode that image. Try JPG or PNG.');
         img.src = ev.target.result;
       };
       reader.readAsDataURL(fileObj);
     };
 
-    if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
-      if (window.heic2any) {
-        heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 })
-          .then(conversionResult => {
-            const blob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
-            loadStandardImage(blob);
-          })
-          .catch(() => loadStandardImage(file));
-      } else {
-        loadStandardImage(file);
+    if (isHeicFile(file)) {
+      if (!window.heic2any) {
+        fail('HEIC support is still loading. Wait a second and try again, or export as JPG.');
+        return;
       }
-    } else {
-      loadStandardImage(file);
+      heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 })
+        .then(conversionResult => {
+          const blob = Array.isArray(conversionResult) ? conversionResult[0] : conversionResult;
+          loadStandardImage(blob);
+        })
+        .catch(() => fail('Could not convert HEIC. On iPhone, try “Most Compatible” or export as JPG.'));
+      return;
     }
+    loadStandardImage(file);
+  }
+
+  /* Fun builder titles — short enough for the badge tag slot */
+  const TITLE_POOL = {
+    default: ['Wave Rider', 'Ship It', 'Goa Hacker', 'Coast Coder', 'Palm Pilot', 'Monsoon Dev'],
+    frontend: ['Pixel Surfer', 'UI Voyager', 'React Rider', 'CSS Captain'],
+    backend: ['API Surfer', 'Stack Diver', 'Data Surfer', 'Node Nomad'],
+    fullstack: ['Full Wave', 'Stack Surfer', 'End-to-End', 'Ship Captain'],
+    ai: ['Model Rider', 'Prompt Pilot', 'AI Voyager', 'Neural Surf'],
+    design: ['Vibe Crafter', 'Pixel Poet', 'Form Finder', 'Type Surfer'],
+    mobile: ['App Sailor', 'Touch Surfer', 'Swift Rider', 'Native Wave'],
+    web3: ['Chain Rider', 'Block Surfer', 'Wallet Wave', 'On-Chain'],
+    founder: ['Build Chief', 'Founder Wave', 'Ship Owner', 'Goa Founder'],
+  };
+
+  function roleBucket(role) {
+    const r = (role || '').toLowerCase();
+    if (/ai|ml|llm|prompt|model/.test(r)) return 'ai';
+    if (/design|ux|ui|product design/.test(r)) return 'design';
+    if (/mobile|ios|android|flutter|react native/.test(r)) return 'mobile';
+    if (/web3|crypto|solidity|blockchain/.test(r)) return 'web3';
+    if (/founder|ceo|builder founder/.test(r)) return 'founder';
+    if (/full.?stack|fullstack/.test(r)) return 'fullstack';
+    if (/front|react|vue|angular|next/.test(r)) return 'frontend';
+    if (/back|node|python|java|rust|go\b|devops|infra/.test(r)) return 'backend';
+    return 'default';
+  }
+
+  function generateBuilderTitle(name, role, avoid) {
+    const bucket = roleBucket(role);
+    const pool = [...(TITLE_POOL[bucket] || []), ...TITLE_POOL.default];
+    const first = (name || '').trim().split(/\s+/)[0];
+    if (first && first.length <= 6) {
+      pool.push(`${first} Wave`, `${first} Dev`);
+    }
+    const unique = [...new Set(pool.map(t => t.slice(0, 14)))].filter(t => t && t !== avoid);
+    return unique[Math.floor(Math.random() * unique.length)] || 'Wave Rider';
+  }
+
+  function applyBuilderTitle(title, { render = true } = {}) {
+    const t = String(title || '').slice(0, 14);
+    S.front.tag = t;
+    const el = document.getElementById('inputTag');
+    if (el) el.value = t;
+    if (render) renderFront();
   }
 
   function fitFont(ctx, text, base, family, weight, maxW, min=12) {
@@ -234,11 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 5. Speciality tag
+    // 5. Builder title (generated / editable tag)
     if (fs.tag.trim()) {
       frontCtx.save();
       frontCtx.translate(FC.tagCenter.x, FC.tagCenter.y);
-      fitFont(frontCtx, fs.tag.trim().toUpperCase(), 21, 'Outfit', '800', FC.maxTagW, 12);
+      fitFont(frontCtx, fs.tag.trim().toUpperCase(), 20, 'Outfit', '800', FC.maxTagW, 11);
       frontCtx.fillStyle = '#ffffff';
       frontCtx.textAlign = 'center';
       frontCtx.textBaseline = 'middle';
@@ -395,7 +459,10 @@ document.addEventListener('DOMContentLoaded', () => {
   bindChange('fontNameSelect', e => { S.front.fontName = e.target.value; renderFront(); });
   bind('fontSizeName', e => { S.front.fontSizeName = parseInt(e.target.value); renderFront(); });
 
-  bind('inputRole', e => { S.front.role = e.target.value; renderFront(); });
+  bind('inputRole', e => {
+    S.front.role = e.target.value;
+    renderFront();
+  });
 
   bind('inputBuilderId', e => {
     if (e.target.value.length > 6) e.target.value = e.target.value.slice(0, 6);
@@ -404,8 +471,23 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   bind('inputTag', e => {
-    if (e.target.value.length > 10) e.target.value = e.target.value.slice(0, 10);
-    S.front.tag = e.target.value; renderFront();
+    if (e.target.value.length > 14) e.target.value = e.target.value.slice(0, 14);
+    S.front.tag = e.target.value;
+    renderFront();
+  });
+
+  const btnRegenTitle = document.getElementById('btnRegenTitle');
+  if (btnRegenTitle) {
+    btnRegenTitle.addEventListener('click', () => {
+      applyBuilderTitle(generateBuilderTitle(S.front.name, S.front.role, S.front.tag));
+    });
+  }
+
+  // Fresh title once fonts/templates are ready (keeps demo data fun)
+  document.fonts.ready.then(() => {
+    if (!S.front.tag || S.front.tag === 'React Dev' || S.front.tag === 'Wave Rider') {
+      applyBuilderTitle(generateBuilderTitle(S.front.name, S.front.role), { render: true });
+    }
   });
 
   // Profile Pic Image Adjustments (Zoom, Move X, Move Y, Rotate)
@@ -474,19 +556,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = e.target.files[0];
     if (!file) return;
     processImageFile(file, img => {
-      if (currentView === 'pfp') {
-        S.pfp.image = img;
-        S.pfp.img   = { x:0, y:0, scale:1, rotate:0 };
-        syncPhotoSliders();
-        document.getElementById('labelProfilePicText').textContent = file.name;
-        renderPfp();
-      } else {
-        S.front.image = img;
-        S.front.img   = { x:0, y:0, scale:1, rotate:0 };
-        syncPhotoSliders();
-        document.getElementById('labelProfilePicText').textContent = file.name;
-        renderFront();
-      }
+      // Sync one upload across Format A (PFP) and Format B (front pass)
+      const reset = { x: 0, y: 0, scale: 1, rotate: 0 };
+      S.front.image = img;
+      S.front.img = { ...reset };
+      S.pfp.image = img;
+      S.pfp.img = { ...reset };
+      syncPhotoSliders();
+      document.getElementById('labelProfilePicText').textContent = file.name;
+      renderFront();
+      renderPfp();
     });
     e.target.value = '';
   });
@@ -765,43 +844,185 @@ document.addEventListener('DOMContentLoaded', () => {
     a.click();
   };
 
-  /* ── Share to X ──────────────────────────────────── */
-  window.shareToX = side => {
-    let rawText = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
+  /* ── Share to X (their sync intent launcher + our upload/OG preview) ── */
+  const PROD_ORIGIN = 'https://hhhexe.vercel.app';
+
+  function canvasToBlob(canvas, type = 'image/jpeg', quality = 0.92) {
+    return new Promise((resolve, reject) => {
+      if (!canvas) return reject(new Error('No canvas'));
+      canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), type, quality);
+    });
+  }
+
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function uploadGeneratedImage(dataUrl, filename) {
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl, filename }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.url) return data.url;
+      }
+    } catch (_) { /* local static server, etc. */ }
+
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      const form = new FormData();
+      form.append('reqtype', 'fileupload');
+      form.append('time', '72h');
+      form.append('fileToUpload', blob, filename);
+      const up = await fetch('https://litterbox.catbox.moe/resources/internals/api.php', {
+        method: 'POST',
+        body: form,
+      });
+      const text = (await up.text()).trim();
+      if (text.startsWith('http')) return text;
+    } catch (_) { /* CORS / network */ }
+
+    return null;
+  }
+
+  function shareApiOrigin() {
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return PROD_ORIGIN;
+    return window.location.origin;
+  }
+
+  function buildShareCardUrl(imageUrl, kind, name) {
+    const base = `${shareApiOrigin()}/api/card`;
+    const params = new URLSearchParams({
+      img: imageUrl,
+      kind: kind || 'pfp',
+    });
+    if (name) params.set('name', name);
+    return `${base}?${params.toString()}`;
+  }
+
+  function tweetIntentUrl(text, linkUrl) {
+    const t = encodeURIComponent(text);
+    const u = encodeURIComponent(linkUrl || PROD_ORIGIN);
+    // twitter.com intent — opens installed X app on mobile (their proven path)
+    return `https://twitter.com/intent/tweet?text=${t}&url=${u}`;
+  }
+
+  function openXCompose(text, linkUrl, preOpened) {
+    const intent = tweetIntentUrl(text, linkUrl);
+    const ua = navigator.userAgent || '';
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isAndroid = /Android/i.test(ua);
+    const message = `${text} ${linkUrl || PROD_ORIGIN}`;
+
+    if (isAndroid) {
+      if (preOpened && !preOpened.closed) preOpened.close();
+      const intentUrl =
+        `intent://post?message=${encodeURIComponent(message)}` +
+        `#Intent;scheme=twitter;package=com.twitter.android;` +
+        `S.browser_fallback_url=${encodeURIComponent(intent)};end`;
+      window.location.href = intentUrl;
+      return;
+    }
+
+    if (isIOS) {
+      if (preOpened && !preOpened.closed) preOpened.close();
+      const deepLink = `twitter://post?message=${encodeURIComponent(message)}`;
+      const started = Date.now();
+      window.location.href = deepLink;
+      setTimeout(() => {
+        if (!document.hidden && Date.now() - started < 1600) {
+          window.location.href = intent;
+        }
+      }, 900);
+      return;
+    }
+
+    // Desktop: navigate the sync-opened window (avoids popup blocker after await)
+    if (preOpened && !preOpened.closed) {
+      preOpened.location.href = intent;
+      return;
+    }
+    window.open(intent, '_blank');
+  }
+
+  function setShareButtonsBusy(busy) {
+    document.querySelectorAll('.btn-x-share').forEach(btn => {
+      btn.disabled = !!busy;
+      if (busy) {
+        btn.dataset.prevHtml = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing…';
+      } else if (btn.dataset.prevHtml) {
+        btn.innerHTML = btn.dataset.prevHtml;
+        delete btn.dataset.prevHtml;
+      }
+    });
+  }
+
+  window.shareToX = async side => {
+    let text = 'Just generated my official Hacker House Goa 2026 Builder Pass! See you in Goa! #FrameInGoa';
     let canvas = frontCanvas;
-    let filename = 'HackerHouse_Goa_Front_Pass.png';
+    let filename = 'HackerHouse_Goa_Front_Pass.jpg';
+    let kind = 'front';
 
     if (side === 'pfp') {
-      rawText = "Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa";
+      text = 'Just framed my profile photo for Hacker House Goa 2026! Check out my PFP #FrameInGoa';
       renderPfp();
       canvas = pfpCanvas;
-      filename = 'HackerHouse_Goa_X_Profile_Frame.png';
+      filename = 'HackerHouse_Goa_X_Profile_Frame.jpg';
+      kind = 'pfp';
     } else if (side === 'back') {
+      text = 'Our Hacker House Goa 2026 team pass is ready! #FrameInGoa';
       renderBack();
       canvas = backCanvas;
-      filename = 'HackerHouse_Goa_Back_Pass.png';
+      filename = 'HackerHouse_Goa_Back_Pass.jpg';
+      kind = 'back';
     } else {
       renderFront();
       canvas = frontCanvas;
-      filename = 'HackerHouse_Goa_Front_Pass.png';
+      filename = 'HackerHouse_Goa_Front_Pass.jpg';
+      kind = 'front';
+      if (S.front.name) {
+        text = `${S.front.name} — ${S.front.tag || 'Builder'} at Hacker House Goa 2026! #FrameInGoa`;
+      }
     }
 
-    // 1. Instantly trigger image download so the custom graphic is saved in user's recents
+    // 1. Instant download (their flow) so the graphic is in Downloads/Recents
     if (canvas) {
-      const a = document.createElement('a');
-      a.download = filename;
-      a.href = canvas.toDataURL('image/png', 1.0);
-      a.click();
+      try {
+        const a = document.createElement('a');
+        a.download = filename.replace(/\.jpg$/i, '.png');
+        a.href = canvas.toDataURL('image/png', 1.0);
+        a.click();
+      } catch (_) { /* ignore */ }
     }
 
-    // 2. Open X App directly using exact twitter.com/intent/tweet URL pattern
-    const text = encodeURIComponent(rawText);
-    const url = encodeURIComponent('https://hhhexe.vercel.app/');
+    // 2. Open a blank window synchronously under the click (their window.open pattern)
+    const preOpened = window.open('about:blank', '_blank');
 
-    window.open(
-      `https://twitter.com/intent/tweet?text=${text}&url=${url}`,
-      '_blank'
-    );
+    setShareButtonsBusy(true);
+    try {
+      const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+      const dataUrl = await blobToDataURL(blob);
+      const imageUrl = await uploadGeneratedImage(dataUrl, filename);
+      const linkUrl = imageUrl
+        ? buildShareCardUrl(imageUrl, kind, S.front.name)
+        : PROD_ORIGIN;
+      openXCompose(text, linkUrl, preOpened);
+    } catch (_) {
+      openXCompose(text, PROD_ORIGIN, preOpened);
+    } finally {
+      setShareButtonsBusy(false);
+    }
   };
 
   window.shareCurrentViewToX = () => {
