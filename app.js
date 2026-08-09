@@ -1101,16 +1101,18 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `Team ${team}${slogan ? ` — ${slogan}` : ''}`
       : '';
 
-    // No second URL in text — X drops cards when a tweet has multiple links.
-    // Studio CTA lives on the preview card page button instead.
+    // Blank line between sections; studio link visible in text.
+    // Preview card URL is passed separately via intent `url=` (not duplicated here).
+    const cta = `Try it now and generate yours\n${PROD_ORIGIN}`;
+
     if (side === 'pfp') {
       return [
         'Excited to share my Hacker House Goa 2026 PFP!',
         detailBits,
         teamLine,
         'See you in Goa! #FrameInGoa',
-        'Try it now and generate yours',
-      ].filter(Boolean).join('\n');
+        cta,
+      ].filter(Boolean).join('\n\n');
     }
 
     if (side === 'back') {
@@ -1118,8 +1120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         `Excited to share our Hacker House Goa 2026 team pass${team ? ` — ${team}` : ''}!`,
         teamLine || detailBits,
         'See you in Goa! #FrameInGoa',
-        'Try it now and generate yours',
-      ].filter(Boolean).join('\n');
+        cta,
+      ].filter(Boolean).join('\n\n');
     }
 
     return [
@@ -1127,8 +1129,8 @@ document.addEventListener('DOMContentLoaded', () => {
       detailBits,
       teamLine,
       'See you in Goa! #FrameInGoa',
-      'Try it now and generate yours',
-    ].filter(Boolean).join('\n');
+      cta,
+    ].filter(Boolean).join('\n\n');
   }
 
   function tweetWebUrl(text, linkUrl) {
@@ -1146,10 +1148,11 @@ document.addEventListener('DOMContentLoaded', () => {
    * is missing / does not take over the page.
    */
   function openXCompose(text, linkUrl, preOpened) {
-    // Single URL only (card or studio) — required for X large-image previews
+    // Card URL drives the large image preview; studio link stays visible in text body
     const shareLink = linkUrl || PROD_ORIGIN;
     const webUrl = tweetWebUrl(text, shareLink);
-    const message = `${text}\n${shareLink}`;
+    // Don't append card URL again if text already has the studio link (keeps spacing clean)
+    const message = text.includes(PROD_ORIGIN) ? text : `${text}\n\n${shareLink}`;
     const ua = navigator.userAgent || '';
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const isAndroid = /Android/i.test(ua);
@@ -1273,7 +1276,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
       const dataUrl = await blobToDataURL(blob);
       const imageUrl = await uploadGeneratedImage(dataUrl, filename);
-      // ONE url only = preview card (studio CTA is on that page, not a 2nd tweet link)
+      // Intent `url` = preview card (image unfurl). Studio link is already in text.
       const linkUrl = imageUrl
         ? buildShareCardUrl(imageUrl, kind, {
             name: S.front.name,
@@ -1281,13 +1284,9 @@ document.addEventListener('DOMContentLoaded', () => {
             team: S.back.teamName,
           })
         : PROD_ORIGIN;
-      // If we only have the studio homepage, mention it once in text
-      if (!imageUrl) {
-        text = `${text}\n${PROD_ORIGIN}`;
-      }
       openXCompose(text, linkUrl, preOpened);
     } catch (_) {
-      openXCompose(`${text}\n${PROD_ORIGIN}`, PROD_ORIGIN, preOpened);
+      openXCompose(text, PROD_ORIGIN, preOpened);
     } finally {
       setShareButtonsBusy(false);
     }
