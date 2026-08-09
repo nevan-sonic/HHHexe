@@ -767,13 +767,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /* ── Share to X ──────────────────────────────────── */
   window.shareToX = side => {
-    const shareUrl = 'https://hhhexe.vercel.app/';
-    let text = `Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa ${shareUrl}`;
+    let rawText = "Just generated my official Hacker House Goa 2026 Builder Pass! 🌴⚡ See you in Goa! #FrameInGoa";
     let canvas = frontCanvas;
     let filename = 'HackerHouse_Goa_Front_Pass.png';
 
     if (side === 'pfp') {
-      text = `Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa ${shareUrl}`;
+      rawText = "Just framed my profile photo for Hacker House Goa 2026! 🌴⚡ Check out my PFP #FrameInGoa";
       renderPfp();
       canvas = pfpCanvas;
       filename = 'HackerHouse_Goa_X_Profile_Frame.png';
@@ -787,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
       filename = 'HackerHouse_Goa_Front_Pass.png';
     }
 
-    // 1. Download image to user's device gallery for optional manual attachment
+    // 1. Download image to user's device gallery so graphic is saved in recents
     if (canvas && canvas.toBlob) {
       canvas.toBlob(blob => {
         if (blob) {
@@ -799,9 +798,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 'image/png', 1.0);
     }
 
-    // 2. Open X Intent with pre-filled text & URL (triggers Large Image Card Preview)
-    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
-    window.open(tweetUrl, '_blank');
+    // 2. Open X Tweet Composer directly using text and url parameters
+    const text = encodeURIComponent(rawText);
+    const url = encodeURIComponent('https://hhhexe.vercel.app/');
+
+    window.open(
+      `https://x.com/intent/tweet?text=${text}&url=${url}`,
+      '_blank'
+    );
   };
 
   window.shareCurrentViewToX = () => {
