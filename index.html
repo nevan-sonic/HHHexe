@@ -31,7 +31,7 @@
   <!-- HEIC/HEIF (iPhone) → JPEG -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   
-  <link rel="stylesheet" href="styles.css?v=2.2.9">
+  <link rel="stylesheet" href="styles.css?v=2.3.0">
 </head>
 <body>
   <div class="app-container">
@@ -301,10 +301,10 @@
               </div>
             </div>
             <div class="card-footer-controls">
-              <button class="btn btn-sm btn-subtle" onclick="triggerProfileUpload()">
-                <i class="fa-solid fa-image"></i> Change Photo
+              <button class="btn btn-sm btn-subtle" type="button" onclick="downloadSinglePass('front')">
+                <i class="fa-solid fa-download"></i> Download
               </button>
-              <button class="btn btn-sm btn-x-share" onclick="shareToX('front')">
+              <button class="btn btn-sm btn-x-share" type="button" onclick="shareToX('front')">
                 <i class="fa-brands fa-x-twitter"></i> Share to X
               </button>
             </div>
@@ -326,10 +326,10 @@
               </div>
             </div>
             <div class="card-footer-controls">
-              <button class="btn btn-sm btn-subtle" onclick="triggerLogoUpload()">
-                <i class="fa-solid fa-image"></i> Change Logo
+              <button class="btn btn-sm btn-subtle" type="button" onclick="downloadSinglePass('back')">
+                <i class="fa-solid fa-download"></i> Download
               </button>
-              <button class="btn btn-sm btn-x-share" onclick="shareToX('back')">
+              <button class="btn btn-sm btn-x-share" type="button" onclick="shareToX('back')">
                 <i class="fa-brands fa-x-twitter"></i> Share to X
               </button>
             </div>
@@ -351,10 +351,10 @@
               </div>
             </div>
             <div class="card-footer-controls">
-              <button class="btn btn-sm btn-subtle" onclick="triggerProfileUpload()">
-                <i class="fa-solid fa-image"></i> Change Photo
+              <button class="btn btn-sm btn-subtle" type="button" onclick="downloadSinglePass('pfp')">
+                <i class="fa-solid fa-download"></i> Download
               </button>
-              <button class="btn btn-sm btn-x-share" onclick="shareToX('pfp')">
+              <button class="btn btn-sm btn-x-share" type="button" onclick="shareToX('pfp')">
                 <i class="fa-brands fa-x-twitter"></i> Share to X
               </button>
             </div>
@@ -364,6 +364,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=2.2.9"></script>
+  <script src="app.js?v=2.3.0"></script>
 </body>
 </html>

@@ -605,7 +605,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (frontHint) frontHint.classList.remove('is-dismissed');
       if (pfpHint) pfpHint.classList.remove('is-dismissed');
       syncPhotoSliders();
-      document.getElementById('labelProfilePicText').textContent = file.name;
+      const profileLabel = document.getElementById('labelProfilePicText');
+      if (profileLabel) profileLabel.textContent = 'Upload another pic';
       renderFront();
       renderPfp();
       showDragHint(currentView === 'pfp' ? 'pfp' : 'front');
@@ -682,7 +683,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('logoPosXVal').textContent = '0px';
       document.getElementById('logoPosYVal').textContent = '0px';
       document.getElementById('logoRotateVal').textContent = '0°';
-      document.getElementById('labelTeamLogoText').textContent = file.name;
+      const logoLabel = document.getElementById('labelTeamLogoText');
+      if (logoLabel) logoLabel.textContent = 'Upload another pic';
       renderBack();
       showDragHint('back');
     });
