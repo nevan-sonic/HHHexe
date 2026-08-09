@@ -552,6 +552,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* ── Drag hint: show once before first move, never again ── */
+  const hintTimers = {};
+  const hintDismissed = { front: false, back: false, pfp: false };
+
+  function hintEl(side) {
+    return document.getElementById(
+      side === 'pfp' ? 'pfpDragHint' : side === 'back' ? 'backDragHint' : 'frontDragHint'
+    );
+  }
+
+  function dismissDragHint(side) {
+    if (hintDismissed[side]) return;
+    hintDismissed[side] = true;
+    if (hintTimers[side]) {
+      clearTimeout(hintTimers[side]);
+      delete hintTimers[side];
+    }
+    const el = hintEl(side);
+    if (!el) return;
+    el.classList.remove('is-visible');
+    el.classList.add('is-dismissed');
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  function showDragHint(side) {
+    if (hintDismissed[side]) return;
+    const el = hintEl(side);
+    if (!el) return;
+    el.classList.remove('is-dismissed');
+    el.classList.add('is-visible');
+    el.setAttribute('aria-hidden', 'false');
+    if (hintTimers[side]) clearTimeout(hintTimers[side]);
+    hintTimers[side] = setTimeout(() => dismissDragHint(side), 2800);
+  }
+
   document.getElementById('inputProfilePic').addEventListener('change', e => {
     const file = e.target.files[0];
     if (!file) return;
@@ -562,10 +597,18 @@ document.addEventListener('DOMContentLoaded', () => {
       S.front.img = { ...reset };
       S.pfp.image = img;
       S.pfp.img = { ...reset };
+      // Fresh photo → allow the one-time hint again for both views
+      hintDismissed.front = false;
+      hintDismissed.pfp = false;
+      const frontHint = hintEl('front');
+      const pfpHint = hintEl('pfp');
+      if (frontHint) frontHint.classList.remove('is-dismissed');
+      if (pfpHint) pfpHint.classList.remove('is-dismissed');
       syncPhotoSliders();
       document.getElementById('labelProfilePicText').textContent = file.name;
       renderFront();
       renderPfp();
+      showDragHint(currentView === 'pfp' ? 'pfp' : 'front');
     });
     e.target.value = '';
   });
@@ -628,6 +671,9 @@ document.addEventListener('DOMContentLoaded', () => {
     processImageFile(file, img => {
       S.back.image = img;
       S.back.img   = { x:0, y:0, scale:1, rotate:0 };
+      hintDismissed.back = false;
+      const backHint = hintEl('back');
+      if (backHint) backHint.classList.remove('is-dismissed');
       document.getElementById('logoZoom').value = 1;
       document.getElementById('logoPosX').value = 0;
       document.getElementById('logoPosY').value = 0;
@@ -638,133 +684,258 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('logoRotateVal').textContent = '0°';
       document.getElementById('labelTeamLogoText').textContent = file.name;
       renderBack();
+      showDragHint('back');
     });
     e.target.value = '';
   });
 
-  /* ── Canvas Drag-to-Pan (Bidirectional sync with Move X / Move Y sliders) ── */
+  /* ── Canvas gestures: drag / pinch-zoom / twist-rotate (circle only) ── */
+  function circleHitFor(side) {
+    if (side === 'pfp') return { x: 512, y: 420, r: 330 };
+    if (side === 'back') return { x: BC.circleCenter.x, y: BC.circleCenter.y, r: BC.circleRadius };
+    return { x: FC.circleCenter.x, y: FC.circleCenter.y, r: FC.circleRadius };
+  }
+
   function makeDraggable(canvas, side) {
     if (!canvas) return;
-    let dragging = false, sx=0, sy=0, ox=0, oy=0;
 
-    const coords = e => {
-      const r = canvas.getBoundingClientRect();
-      const cx = e.touches ? e.touches[0].clientX : e.clientX;
-      const cy = e.touches ? e.touches[0].clientY : e.clientY;
-      const cw = side === 'pfp' ? 1024 : 722;
-      const ch = side === 'pfp' ? 1024 : 1099;
-      return { x:(cx-r.left)*(cw/r.width), y:(cy-r.top)*(ch/r.height) };
-    };
-
-    const startDrag = e => {
-      const targetState = side === 'pfp' ? S.pfp : (side === 'front' ? S.front : S.back);
-      if (!targetState.image) return;
-      const c = coords(e);
-      sx = c.x; sy = c.y;
-      ox = targetState.img.x; oy = targetState.img.y;
-      dragging = true;
-    };
-
-    const updateZoomUI = (scaleVal) => {
-      const prefix = side === 'back' ? 'logo' : 'profile';
-      const sliderZoom = document.getElementById(`${prefix}Zoom`);
-      const valZoom = document.getElementById(`${prefix}ZoomVal`);
-      if (sliderZoom) sliderZoom.value = scaleVal;
-      if (valZoom) valZoom.textContent = `${Math.round(scaleVal * 100)}%`;
-    };
-
-    const doDrag = e => {
-      if (!dragging) return;
-      if (e.touches && e.touches.length > 1) return;
-      const c = coords(e);
-      const newX = Math.round(ox + (c.x - sx));
-      const newY = Math.round(oy + (c.y - sy));
-
-      const targetState = side === 'pfp' ? S.pfp : (side === 'front' ? S.front : S.back);
-      targetState.img.x = newX;
-      targetState.img.y = newY;
-
-      const prefix = side === 'back' ? 'logo' : 'profile';
-      const sliderX = document.getElementById(`${prefix}PosX`);
-      const sliderY = document.getElementById(`${prefix}PosY`);
-      const valX = document.getElementById(`${prefix}PosXVal`);
-      const valY = document.getElementById(`${prefix}PosYVal`);
-
-      if (sliderX) sliderX.value = newX;
-      if (sliderY) sliderY.value = newY;
-      if (valX) valX.textContent = `${newX}px`;
-      if (valY) valY.textContent = `${newY}px`;
-
-      if (side === 'pfp') renderPfp();
-      else if (side === 'front') renderFront();
-      else renderBack();
-    };
-
-    const stopDrag = () => { dragging = false; };
-
-    // Mouse events
-    canvas.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', doDrag);
-    window.addEventListener('mouseup', stopDrag);
-
-    // Mouse Wheel Zoom
-    canvas.addEventListener('wheel', e => {
-      const targetState = side === 'pfp' ? S.pfp : (side === 'front' ? S.front : S.back);
-      if (!targetState.image) return;
-      e.preventDefault();
-      const zoomFactor = e.deltaY < 0 ? 1.05 : 0.95;
-      let newScale = targetState.img.scale * zoomFactor;
-      newScale = Math.max(0.05, Math.min(4.0, newScale));
-      targetState.img.scale = newScale;
-      updateZoomUI(newScale);
-      if (side === 'pfp') renderPfp();
-      else if (side === 'front') renderFront();
-      else renderBack();
-    }, { passive: false });
-
-    // Touch Pinch & Drag Handlers
+    let dragging = false;
+    let pinching = false;
+    let sx = 0, sy = 0, ox = 0, oy = 0;
     let pinchDist = 0;
-    const getTouchDist = e => {
+    let pinchAngle = 0;
+    let baseScale = 1;
+    let baseRotate = 0;
+
+    const canvasSize = () => (
+      side === 'pfp' ? { cw: 1024, ch: 1024 } : { cw: 722, ch: 1099 }
+    );
+
+    const target = () => (side === 'pfp' ? S.pfp : side === 'front' ? S.front : S.back);
+
+    const clientToCanvas = (clientX, clientY) => {
+      const r = canvas.getBoundingClientRect();
+      const { cw, ch } = canvasSize();
+      return {
+        x: (clientX - r.left) * (cw / r.width),
+        y: (clientY - r.top) * (ch / r.height),
+      };
+    };
+
+    const eventPoint = e => {
+      if (e.touches && e.touches.length) {
+        return clientToCanvas(e.touches[0].clientX, e.touches[0].clientY);
+      }
+      return clientToCanvas(e.clientX, e.clientY);
+    };
+
+    const insideCircle = (pt) => {
+      const c = circleHitFor(side);
+      const dx = pt.x - c.x;
+      const dy = pt.y - c.y;
+      // Slightly padded so the yellow ring is still grab-able
+      return (dx * dx + dy * dy) <= (c.r + 12) * (c.r + 12);
+    };
+
+    const midpointInCircle = e => {
+      if (!e.touches || e.touches.length < 2) return false;
+      const a = clientToCanvas(e.touches[0].clientX, e.touches[0].clientY);
+      const b = clientToCanvas(e.touches[1].clientX, e.touches[1].clientY);
+      return insideCircle({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    };
+
+    const touchDist = e => {
       const t1 = e.touches[0];
       const t2 = e.touches[1];
       return Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
     };
 
+    const touchAngle = e => {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      return Math.atan2(t2.clientY - t1.clientY, t2.clientX - t1.clientX) * (180 / Math.PI);
+    };
+
+    const prefix = () => (side === 'back' ? 'logo' : 'profile');
+
+    const updatePosUI = (x, y) => {
+      const p = prefix();
+      const sliderX = document.getElementById(`${p}PosX`);
+      const sliderY = document.getElementById(`${p}PosY`);
+      const valX = document.getElementById(`${p}PosXVal`);
+      const valY = document.getElementById(`${p}PosYVal`);
+      if (sliderX) sliderX.value = x;
+      if (sliderY) sliderY.value = y;
+      if (valX) valX.textContent = `${x}px`;
+      if (valY) valY.textContent = `${y}px`;
+    };
+
+    const updateZoomUI = (scaleVal) => {
+      const p = prefix();
+      const sliderZoom = document.getElementById(`${p}Zoom`);
+      const valZoom = document.getElementById(`${p}ZoomVal`);
+      if (sliderZoom) sliderZoom.value = scaleVal;
+      if (valZoom) valZoom.textContent = `${Math.round(scaleVal * 100)}%`;
+    };
+
+    const updateRotateUI = (deg) => {
+      const p = prefix();
+      const slider = document.getElementById(`${p}Rotate`);
+      const val = document.getElementById(`${p}RotateVal`);
+      if (slider) slider.value = deg;
+      if (val) val.textContent = `${deg}°`;
+    };
+
+    const paint = () => {
+      if (side === 'pfp') renderPfp();
+      else if (side === 'front') renderFront();
+      else renderBack();
+    };
+
+    const setGestureActive = (on) => {
+      canvas.classList.toggle('gesture-active', !!on);
+    };
+
+    const endGestures = () => {
+      dragging = false;
+      pinching = false;
+      pinchDist = 0;
+      setGestureActive(false);
+    };
+
+    const beginOneFinger = e => {
+      const st = target();
+      if (!st.image) return false;
+      const pt = eventPoint(e);
+      if (!insideCircle(pt)) return false;
+      dismissDragHint(side);
+      sx = pt.x; sy = pt.y;
+      ox = st.img.x; oy = st.img.y;
+      dragging = true;
+      pinching = false;
+      setGestureActive(true);
+      return true;
+    };
+
+    const beginTwoFinger = e => {
+      const st = target();
+      if (!st.image || e.touches.length < 2) return false;
+      if (!midpointInCircle(e)) return false;
+      dismissDragHint(side);
+      dragging = false;
+      pinching = true;
+      pinchDist = touchDist(e);
+      pinchAngle = touchAngle(e);
+      baseScale = st.img.scale;
+      baseRotate = st.img.rotate;
+      setGestureActive(true);
+      return true;
+    };
+
+    // Mouse
+    canvas.addEventListener('mousedown', e => {
+      if (beginOneFinger(e)) e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const st = target();
+      const pt = eventPoint(e);
+      const newX = Math.round(ox + (pt.x - sx));
+      const newY = Math.round(oy + (pt.y - sy));
+      st.img.x = newX;
+      st.img.y = newY;
+      updatePosUI(newX, newY);
+      paint();
+    });
+
+    window.addEventListener('mouseup', endGestures);
+
+    canvas.addEventListener('wheel', e => {
+      const st = target();
+      if (!st.image) return;
+      const pt = eventPoint(e);
+      if (!insideCircle(pt)) return;
+      e.preventDefault();
+      dismissDragHint(side);
+      let newScale = st.img.scale * (e.deltaY < 0 ? 1.05 : 0.95);
+      newScale = Math.max(0.05, Math.min(4.0, newScale));
+      st.img.scale = newScale;
+      updateZoomUI(newScale);
+      paint();
+    }, { passive: false });
+
+    // Touch — only steal the gesture when starting inside the photo circle
     canvas.addEventListener('touchstart', e => {
-      const targetState = side === 'pfp' ? S.pfp : (side === 'front' ? S.front : S.back);
-      if (!targetState.image) return;
+      const st = target();
+      if (!st.image) return;
+
       if (e.touches.length === 2) {
-        dragging = false;
-        pinchDist = getTouchDist(e);
-      } else if (e.touches.length === 1) {
-        startDrag(e);
+        if (beginTwoFinger(e)) {
+          if (e.cancelable) e.preventDefault();
+        }
+        return;
       }
-    }, { passive: true });
+
+      if (e.touches.length === 1) {
+        if (beginOneFinger(e)) {
+          if (e.cancelable) e.preventDefault();
+        }
+        // else: outside circle → browser scrolls the page
+      }
+    }, { passive: false });
 
     window.addEventListener('touchmove', e => {
-      const targetState = side === 'pfp' ? S.pfp : (side === 'front' ? S.front : S.back);
-      if (!targetState.image) return;
-      if (e.touches.length === 2 && pinchDist > 0) {
+      const st = target();
+      if (!st.image) return;
+
+      if (pinching && e.touches.length >= 2) {
         if (e.cancelable) e.preventDefault();
-        const dist = getTouchDist(e);
-        const factor = dist / pinchDist;
-        pinchDist = dist;
-        let newScale = targetState.img.scale * factor;
-        newScale = Math.max(0.05, Math.min(4.0, newScale));
-        targetState.img.scale = newScale;
-        updateZoomUI(newScale);
-        if (side === 'pfp') renderPfp();
-        else if (side === 'front') renderFront();
-        else renderBack();
-      } else if (dragging) {
-        doDrag(e);
+        const dist = touchDist(e);
+        const angle = touchAngle(e);
+        if (pinchDist > 0) {
+          let newScale = baseScale * (dist / pinchDist);
+          newScale = Math.max(0.05, Math.min(4.0, newScale));
+          st.img.scale = newScale;
+          updateZoomUI(newScale);
+
+          let newRot = Math.round(baseRotate + (angle - pinchAngle));
+          // Normalize to slider range [-180, 180]
+          while (newRot > 180) newRot -= 360;
+          while (newRot < -180) newRot += 360;
+          st.img.rotate = newRot;
+          updateRotateUI(newRot);
+          paint();
+        }
+        return;
       }
-    }, { passive: true });
+
+      if (dragging && e.touches.length === 1) {
+        if (e.cancelable) e.preventDefault();
+        const pt = eventPoint(e);
+        const newX = Math.round(ox + (pt.x - sx));
+        const newY = Math.round(oy + (pt.y - sy));
+        st.img.x = newX;
+        st.img.y = newY;
+        updatePosUI(newX, newY);
+        paint();
+      }
+    }, { passive: false });
 
     window.addEventListener('touchend', e => {
-      if (e.touches.length < 2) pinchDist = 0;
-      if (e.touches.length === 0) stopDrag();
+      if (e.touches.length >= 2) return;
+      if (e.touches.length === 1 && pinching) {
+        // Dropped one finger after pinch — stop pinch; don't auto-start drag
+        pinching = false;
+        pinchDist = 0;
+        dragging = false;
+        setGestureActive(false);
+        return;
+      }
+      if (e.touches.length === 0) endGestures();
     });
+
+    window.addEventListener('touchcancel', endGestures);
   }
 
   makeDraggable(frontCanvas, 'front');
@@ -798,6 +969,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (frontTextControls) frontTextControls.style.display = 'block';
         activateTab('tab-front');
         syncPhotoSliders();
+        if (S.front.image) showDragHint('front');
       } else if (v === 'back') {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'none';
@@ -805,6 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cardBoxPfp) cardBoxPfp.style.display = 'none';
         if (frontTextControls) frontTextControls.style.display = 'block';
         activateTab('tab-back');
+        if (S.back.image) showDragHint('back');
       } else if (v === 'pfp') {
         cardsDisplay.className = 'cards-display grid-single';
         cardBoxFront.style.display = 'none';
@@ -814,6 +987,7 @@ document.addEventListener('DOMContentLoaded', () => {
         activateTab('tab-front');
         syncPhotoSliders();
         renderPfp();
+        if (S.pfp.image) showDragHint('pfp');
       }
     });
   });

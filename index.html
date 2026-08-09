@@ -31,7 +31,7 @@
   <!-- HEIC/HEIF (iPhone) → JPEG -->
   <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
   
-  <link rel="stylesheet" href="styles.css?v=2.2.0">
+  <link rel="stylesheet" href="styles.css?v=2.2.1">
 </head>
 <body>
   <div class="app-container">
@@ -281,9 +281,13 @@
             <div class="card-viewport">
               <canvas id="frontCanvas" width="722" height="1099"></canvas>
               <!-- Interactive Drag Overlay -->
-              <div class="drag-hint-overlay" id="frontDragHint">
-                <div class="drag-circle-guide"></div>
-                <div class="drag-tooltip"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to adjust photo</div>
+              <div class="drag-hint-overlay" id="frontDragHint" aria-hidden="true">
+                <div class="drag-hint-anchor front-anchor">
+                  <div class="drag-circle-guide"></div>
+                  <div class="drag-tooltip">
+                    <i class="fa-solid fa-hand-pointer"></i> Drag · Pinch · Twist to adjust
+                  </div>
+                </div>
               </div>
             </div>
             <div class="card-footer-controls">
@@ -302,9 +306,13 @@
             <div class="card-viewport">
               <canvas id="backCanvas" width="722" height="1099"></canvas>
               <!-- Interactive Drag Overlay -->
-              <div class="drag-hint-overlay" id="backDragHint">
-                <div class="drag-circle-guide logo-guide"></div>
-                <div class="drag-tooltip"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to adjust logo</div>
+              <div class="drag-hint-overlay" id="backDragHint" aria-hidden="true">
+                <div class="drag-hint-anchor back-anchor">
+                  <div class="drag-circle-guide"></div>
+                  <div class="drag-tooltip">
+                    <i class="fa-solid fa-hand-pointer"></i> Drag · Pinch · Twist to adjust
+                  </div>
+                </div>
               </div>
             </div>
             <div class="card-footer-controls">
@@ -323,9 +331,13 @@
             <div class="card-viewport pfp-viewport">
               <canvas id="pfpCanvas" width="1024" height="1024"></canvas>
               <!-- Interactive Drag Overlay -->
-              <div class="drag-hint-overlay" id="pfpDragHint">
-                <div class="drag-circle-guide pfp-guide"></div>
-                <div class="drag-tooltip"><i class="fa-solid fa-arrows-up-down-left-right"></i> Drag to adjust photo</div>
+              <div class="drag-hint-overlay" id="pfpDragHint" aria-hidden="true">
+                <div class="drag-hint-anchor pfp-anchor">
+                  <div class="drag-circle-guide"></div>
+                  <div class="drag-tooltip">
+                    <i class="fa-solid fa-hand-pointer"></i> Drag · Pinch · Twist to adjust
+                  </div>
+                </div>
               </div>
             </div>
             <div class="card-footer-controls">
@@ -342,6 +354,6 @@
     </main>
   </div>
 
-  <script src="app.js?v=2.2.0"></script>
+  <script src="app.js?v=2.2.1"></script>
 </body>
 </html>
